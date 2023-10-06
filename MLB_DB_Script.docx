@@ -1,0 +1,29 @@
+CREATE Table IF NOT EXISTS Players_GAME_LOG(Player_Name Varchar PRIMARY KEY,
+Player_Team Varchar,game_date DATE,At_Bats INT,Runs INT,Hits INT, 
+Total_Bases INT, Doubles INT, Triples INT, 
+Home_Runs INT, RBIs INT,Walks INT, 
+Intentional_Walks INT, Strike_Outs INT, Stolen_Bases INT, 
+Caught_Stealing INT,Average DOUBLE, OBP DOUBLE, SLG DOUBLE, 
+OPS DOUBLE, Hit_By_Pitch INT, Sac_Fly INT );
+
+CREATE Table IF NOT EXISTS Players_Season(Player_Name Varchar PRIMARY KEY,
+Player_Team Varchar,games_played INT, At_Bats INT,Runs INT,Hits INT, 
+Total_Bases INT, Doubles INT, Triples INT, 
+Home_Runs INT, RBIs INT,Walks INT, 
+Intentional_Walks INT, Strike_Outs INT, Stolen_Bases INT, 
+Caught_Stealing INT,Average DOUBLE, OBP DOUBLE, SLG DOUBLE, 
+OPS DOUBLE, Groundout_flyout Double);
+
+
+CREATE Table IF NOT EXISTS Players_Career(Player_Name Varchar PRIMARY KEY,
+Player_Team Varchar,games_played INT, At_Bats INT,Runs INT,Hits INT, 
+Total_Bases INT, Doubles INT, Triples INT, 
+Home_Runs INT, RBIs INT,Walks INT, 
+Intentional_Walks INT, Strike_Outs INT, Stolen_Bases INT, 
+Caught_Stealing INT,Average DOUBLE, OBP DOUBLE, SLG DOUBLE, 
+OPS DOUBLE, Groundout_flyout Double);
+
+
+
+
+
