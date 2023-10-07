@@ -1,0 +1,50 @@
+package org.example;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+
+// mlb.com
+// Get team name by parsing through the team's tabs:
+// mlb.com/{team_name}
+// mlb.com/{team_name}/{roster}
+//   Parse through each player's name
+
+// mlb.com/player/{first_name}-{last_name}-{p-id}
+// The player's name and player ID can be identified through parsing (td class = "info", a href="....">(name))
+
+
+
+public class Main {
+    public static String[] teamNames = new String[]{"White Sox", "Cubs", "Guardians", "Reds", "Tigers", "Brewers", "Royals", "Pirates", "Twins", "Cardinals", "Orioles", "Braves", "Red Sox", "Marlins", "Yankees", "Mets", "Rays", "Phillies", "bluejays", "Nationals", "Astros", "dbacks", "Angels", "Rockies", "Athletics", "Dodgers", "Mariners", "Padres", "rangers", "Giants"};
+
+    public static void main(String[] args) {
+        for(int i = 0 ; i < teamNames.length;i++) {
+            teamNames[i] = teamNames[i].toLowerCase().replaceAll(" ", "");
+        }
+
+        try{
+            // Loading (fetching and parsing the HTML)
+            for(String team: teamNames){
+            String urlName = String.format("https://www.mlb.com/%s/roster", team);
+            Document doc = Jsoup.connect(urlName).get();
+            Elements link = doc.select("td.info > a") ;
+
+            //Elements values = doc.select("td") ;
+            //for(Element el:link) {
+                System.out.println(link.attr("href"));
+            //}
+                System.out.println(team);
+            }
+
+
+
+
+
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
