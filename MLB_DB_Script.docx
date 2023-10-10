@@ -24,6 +24,14 @@ Caught_Stealing INT,Average DOUBLE, OBP DOUBLE, SLG DOUBLE,
 OPS DOUBLE, Groundout_flyout Double);
 
 
+CREATE Table IF NOT EXISTS Teams_Season(Team_Name Varchar PRIMARY KEY,
+Season_Year INT, Games_Played INT, Wins INT, Losses INT,
+Runs_Scored INT, Runs_Allowed INT, Home_Runs INT,
+Doubles INT, Triples INT, Stolen_Bases INT, 
+Caught_Stealing INT, Team_Average DOUBLE, 
+Team_OBP DOUBLE, Team_SLG DOUBLE, Team_OPS DOUBLE);
+
+
 
 
 
