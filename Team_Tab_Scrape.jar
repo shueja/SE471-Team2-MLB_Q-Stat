@@ -37,10 +37,11 @@ public class MLB_Scraper {
         return roster ;
     }
 
+// This method will retrieve the names of the teams in lower case and containing no spaces. 
  public Vector<Vector<String>> fetch_rosters() {
      Vector<Vector<String>> rosters = new Vector();
      for (int i = 0; i < teamNames.length; i++) {
-         teamNames[i] = teamNames[i].toLowerCase().replaceAll(" ", "");
+         teamNames[i] = teamNames[i].toLowerCase().replaceAll(" ", ""); // Change the string from normal format to no capitals and spaces 
      }
      System.out.print("Working... ");
      // Loading (fetching and parsing the HTML)
@@ -48,6 +49,7 @@ public class MLB_Scraper {
          System.out.print(team + " ");
          rosters.add(fetch_roster(team));
      }
+    // This for loop will print out the string objects (team names) one by one: 
      for (Vector roster : rosters) {
          for (Object element : roster)
              System.out.println(element);
