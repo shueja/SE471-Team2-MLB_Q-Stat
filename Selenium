@@ -1,8 +1,8 @@
 // Include imports:
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.By; // Used to locate elements in a document 
+import org.openqa.selenium.WebDriver; // Used for the WebDriver (Drives a browser natively like a user)
+import org.openqa.selenium.WebElement; 
+import org.openqa.selenium.chrome.ChromeDriver; // Used for the ChromeDriver (Seperate executable used to control Chrome) 
 
 public class Main{
   public static void main(String[] args){
