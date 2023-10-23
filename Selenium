@@ -1,0 +1,26 @@
+// Include imports:
+import org.openq.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openq.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+public class Main{
+  public static void main(String[] args){
+    System.setProperty("webdriver.chrome.driver", "C: ..."); // Insert the file path for the chrome driver, e.g. \Users\amat001\Desktop\Java\chromedriver.exe
+
+    // Set up the webdriver object
+    WebDriver driver = new ChromeDriver();
+
+    // Set the URL:
+    String url = "...." // Insert the URL you are testing on the mlb.com website
+
+    // Let the driver object get the page
+    driver.get(url);
+
+    // Print the HTMl of the page:
+    System.out.println(driver.getPageSource());
+
+    // Close the driver:
+    driver.quit(); 
+  }
+}
