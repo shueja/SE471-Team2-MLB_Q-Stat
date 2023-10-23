@@ -12,7 +12,7 @@ public class Main{
     WebDriver driver = new ChromeDriver();
 
     // Set the URL:
-    String url = "...." // Insert the URL you are testing on the mlb.com website
+    String url = "...."; // Insert the URL you are testing on the mlb.com website
 
     // Let the driver object get the page
     driver.get(url);
