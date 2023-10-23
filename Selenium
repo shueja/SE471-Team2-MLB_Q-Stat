@@ -18,7 +18,7 @@ public class Main{
     driver.get(url);
 
     // Print the HTMl of the page:
-    System.out.println(driver.getPageSource());
+    System.out.println(driver.getPageSource()); // Selenium will return the HTML as a string; use JSoup to parse through the string
 
     // Close the driver:
     driver.quit(); 
