@@ -1,34 +1,30 @@
-package SeleniumTest;
-import java.util.List;
-
-import org.openqa.selenium.By;
+package Selenium;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
 public class Main {
+    @SuppressWarnings("deprecation")
 	public static void main(String[] args) {
-    // Adjust to your chromedriver.exe path!
-		System.setProperty("webdriver.chrome.driver", "C:\\Users\\asian\\Downloads\\chromedriver_win32\\chromedriver.exe");
+        long startTime = System.currentTimeMillis();
+        System.setProperty("webdriver.chrome.driver", "C:\\Users\\asian\\Downloads\\chromedriver_win32\\chromedriver.exe");
 
-		try {
-      // Create the URL
-			String url = "https://www.mlb.com/player/shohei-ohtani-660271";
-
-      // Edit the version of Chrome you run:
-			ChromeOptions opt = new ChromeOptions(); 
-			opt.setBinary("C:\\Users\\asian\\Downloads\\114\\chrome-win64\\chrome.exe"); // You need to download older version of Google/Chromium
-			WebDriver driver = new ChromeDriver(opt); // Create an new driver using the older version to match with version 114 of the ChromeDriver
-			driver.get(url);
-			List<WebElement> tdElements = driver.findElements(By.tagName("td")); // Create list of 'td' elements from the HTML
-			
-			for(WebElement tdElement: tdElements){
-	            System.out.println(tdElement.getText()); // Print the 'td' elements line by line
-			}
-			driver.close(); 
-		}catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
+        try {
+            
+            String url = "https://www.mlb.com/player/shohei-ohtani-660271";
+            ChromeOptions opt = new ChromeOptions();
+            opt.setBinary("C:\\Users\\asian\\Downloads\\114\\chrome-win64\\chrome.exe");
+            WebDriver driver = new ChromeDriver(opt);
+            driver.get(url);
+            String htmlSource = driver.getPageSource();
+            
+            System.out.println(htmlSource);
+            driver.close();
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        long endTime = System.currentTimeMillis();
+        long totalTime = endTime - startTime;
+        System.out.print(totalTime);
+    }
 }
