@@ -1,26 +1,34 @@
-// Include imports:
-import org.openqa.selenium.By; // Used to locate elements in a document 
-import org.openqa.selenium.WebDriver; // Used for the WebDriver (Drives a browser natively like a user)
-import org.openqa.selenium.WebElement; 
-import org.openqa.selenium.chrome.ChromeDriver; // Used for the ChromeDriver (Seperate executable used to control Chrome) 
+package SeleniumTest;
+import java.util.List;
 
-public class Main{
-  public static void main(String[] args){
-    System.setProperty("webdriver.chrome.driver", "C: ..."); // Insert the file path for the chrome driver, e.g. \Users\amat001\Desktop\Java\chromedriver.exe
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
-    // Set up the webdriver object
-    WebDriver driver = new ChromeDriver();
+public class Main {
+	public static void main(String[] args) {
+    // Adjust to your chromedriver.exe path!
+		System.setProperty("webdriver.chrome.driver", "C:\\Users\\asian\\Downloads\\chromedriver_win32\\chromedriver.exe");
 
-    // Set the URL:
-    String url = "...."; // Insert the URL you are testing on the mlb.com website
+		try {
+      // Create the URL
+			String url = "https://www.mlb.com/player/shohei-ohtani-660271";
 
-    // Let the driver object get the page
-    driver.get(url);
-
-    // Print the HTMl of the page:
-    System.out.println(driver.getPageSource()); // Selenium will return the HTML as a string; use JSoup to parse through the string
-
-    // Close the driver:
-    driver.quit(); 
-  }
+      // Edit the version of Chrome you run:
+			ChromeOptions opt = new ChromeOptions(); 
+			opt.setBinary("C:\\Users\\asian\\Downloads\\114\\chrome-win64\\chrome.exe"); // You need to download older version of Google/Chromium
+			WebDriver driver = new ChromeDriver(opt); // Create an new driver using the older version to match with version 114 of the ChromeDriver
+			driver.get(url);
+			List<WebElement> tdElements = driver.findElements(By.tagName("td")); // Create list of 'td' elements from the HTML
+			
+			for(WebElement tdElement: tdElements){
+	            System.out.println(tdElement.getText()); // Print the 'td' elements line by line
+			}
+			driver.close(); 
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
 }
