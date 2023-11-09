@@ -1,0 +1,121 @@
+package Selenium;
+
+// Import Selenium
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.util.Vector;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.time.Duration;
+// Import jSoup
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+
+public class Main {
+	public static void main(String[] args){        
+		// Define the driver you are using along with the file path for the chromedriver.exe
+        System.setProperty("webdriver.chrome.driver", "C:\\Users\\asian\\Downloads\\chromedriver_win32\\chromedriver.exe");
+
+        // Test name, replace w/ array of lowercased names:
+        String teamName = "angels";
+                
+        // Create a vector of player URL's 
+        Vector<String>rosterUrls = new Vector();
+        
+        // Get the vector of player URL's:
+        try {
+        	// Create the URL that directs to the team page:
+        	String teamRosterUrl = String.format("https://www.mlb.com/%s/roster", teamName);
+        	Document teamRosterDoc = Jsoup.connect(teamRosterUrl).get(); // Connect to the team page 
+        	Elements link = teamRosterDoc.select("td.info>a"); 
+        	
+        	// Get the /player/... element from the Elements:
+        	for(Element el:link) {
+        		String urlEnding = el.attr("href"); // Select the "href" elements where the url ending lies
+        		String playerUrl = String.format("https://www.mlb.com%s", urlEnding); // Create the player URL
+        		rosterUrls.add(playerUrl); // Add it to the rosterURLs vector
+        	}
+        	
+        	// Get the CSV's for each player now
+        	for(String url:rosterUrls) {
+        		// Adjust the settings for Selenium
+        		ChromeOptions opt = new ChromeOptions();
+        		opt.setBinary("C:\\Users\\asian\\Downloads\\114\\chrome-win64\\chrome.exe");
+        		opt.addArguments("--disable-notifications");
+        		WebDriver driver = new ChromeDriver(opt);
+        		
+        		driver.get(url); // Send the url to the driver
+        		WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(10));
+        		wait.until(ExpectedConditions.jsReturnsValue("return document.readyState == 'complete';"));
+        		String htmlSource = driver.getPageSource(); // Extract the entire page's HTML
+        		driver.close();
+        		
+        		// Parse through the htmlSource string from Selenium with jSoup:
+        		Document playerDoc = Jsoup.parse(htmlSource, "UTF-8");
+        		Element careerTable = playerDoc.selectFirst("#careerTable .responsive-datatable__pinned");
+        		
+        		Elements careerTableHeading = new Elements(); 
+        		// Extract the table heading:
+        		if(careerTable != null) {
+        			careerTableHeading = careerTable.select("thead th");
+        		}
+        		else {
+        			System.out.println("!! error for " + url);
+        			FileWriter fileWriter = new FileWriter("out.txt");
+        			PrintWriter printWriter = new PrintWriter(fileWriter);
+        			printWriter.println(htmlSource);
+        			printWriter.close();
+        			continue;
+        		}
+        		// Create string to store the headings:
+        		String headingCsv = "";
+        		// Loop through the careerTableHeadings elements and separate each element with a ,:
+        		for(var th: careerTableHeading)
+        			headingCsv += th.text() + ",";
+        		
+        		// Trim the ending , from the headingCsv:
+        		if(headingCsv.endsWith(","))
+        			headingCsv = headingCsv.substring(0, headingCsv.length()-1);
+        		
+        		// Indicate what player we are showing:
+        		System.out.println("Showing player @ " + url);
+        		System.out.println(headingCsv); 
+        		
+        		// Get the player stats and put them into a CSV format:
+        		Elements pastStats = careerTable.select("tbody tr");
+        		Elements allStats = careerTable.select("tfoot td");
+        		
+        		for(var row: pastStats) {
+        			Elements tds = row.select("td");
+        			
+        			String careerCsv = "";
+        			for(var td: tds)
+        				careerCsv += td.text() + ",";
+        				
+        			if(careerCsv.endsWith(","))
+        				careerCsv = careerCsv.substring(0, careerCsv.length()-1);
+        			
+        			System.out.println(careerCsv);
+        		}
+        		
+        		
+        		String seasonCsv = "";
+        		for(var td: allStats)
+        			seasonCsv += td.text() + ",";
+        		
+        		if (seasonCsv.endsWith(",")) 
+        	        seasonCsv = seasonCsv.substring(0, seasonCsv.length() - 1);
+        		System.out.println(seasonCsv);
+        	}
+        }catch(Exception e) {
+        	e.printStackTrace();
+        }
+	}
+}
