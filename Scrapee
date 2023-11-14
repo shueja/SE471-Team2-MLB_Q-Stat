@@ -1,0 +1,264 @@
+package org.example;
+import org.openqa.selenium.manager.SeleniumManager;
+//import io.github.bonigarcia.wdm.config.DriverManagerType;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver ;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.util.Vector;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.time.Duration;
+// Import jSoup
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+
+
+import java.io.File;
+
+public class MlbScraper2 {
+
+//        private ChromeOptions opt;
+//        private WebDriver driver;
+    WebDriver driver;
+
+
+    public static String[] teamNames = new String[]{
+            "White Sox", "Cubs", "Guardians", "Reds", "Tigers", "Brewers", "Royals", "Pirates",
+            "Twins", "Cardinals", "Orioles", "Braves", "Red Sox", "Marlins", "Yankees", "Mets",
+            "Rays", "Phillies", "bluejays", "Nationals", "Astros", "dbacks", "Angels", "Rockies",
+            "Athletics", "Dodgers", "Mariners", "Padres", "rangers", "Giants"
+    };
+
+    public MlbScraper2() {
+        //{
+//            @Override
+//            protected List<URL> getDriverUrls() throws IOException {
+//                return null;
+//            }
+//
+//            @Override
+//            protected String getDriverName() {
+//                return null;
+//            }
+//
+//            @Override
+//            protected String getDriverVersion() {
+//                return null;
+//            }
+//
+//            @Override
+//            protected void setDriverVersion(String s) {
+//
+//            }
+//
+//            @Override
+//            protected String getBrowserVersion() {
+//                return null;
+//            }
+//
+//            @Override
+//            protected void setBrowserVersion(String s) {
+//
+//            }
+//
+//            @Override
+//            protected void setDriverUrl(URL url) {
+//
+//            }
+//
+//            @Override
+//            protected URL getDriverUrl() {
+//                return null;
+//            }
+//
+//            @Override
+//            protected Optional<URL> getMirrorUrl() {
+//                return Optional.empty();
+//            }
+//
+//            @Override
+//            protected Optional<String> getExportParameter() {
+//                return Optional.empty();
+//            }
+//
+//            @Override
+//            public DriverManagerType getDriverManagerType() {
+//                return null;
+//            }
+//        }
+//        opt.setBinary("C:\\Users\\asian\\Downloads\\114\\chrome-win64\\chrome.exe");
+//        opt.addArguments("--disable-notifications");
+//        this.opt = new ChromeOptions();
+//        this.driver = new ChromeDriver(this.opt);
+        driver = new ChromeDriver();
+    }
+
+
+
+    public List<String> fetchRoster(String team) {
+        List<String> roster = new ArrayList<>();
+        try {
+            String urlName = String.format("https://www.mlb.com/%s/roster", team.toLowerCase().replace(" ", ""));
+            Document doc = Jsoup.connect(urlName).get();
+            Elements link = doc.select("td.info > a");
+            for (Element el : link) {
+                roster.add(el.attr("href"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return roster;
+    }
+
+    public List fetchRosters() {
+        List rosters = new ArrayList<>();
+        for (String team : teamNames) {
+            //System.out.print("Working... " + team + " ");
+            rosters.add(fetchRoster(team));
+        }
+        return rosters;
+    }
+
+    public List<List<String>> fetchRostersConcurrently() {
+        List<List<String>> rosters = new ArrayList<>();
+        ExecutorService executorService = Executors.newFixedThreadPool(1000); // Adjust the pool size
+
+        for (String team : teamNames) {
+            final String finalTeam = team;
+            //System.out.print("Working... " + finalTeam + " ");
+            Future<List<String>> future = executorService.submit(() -> fetchRoster(finalTeam));
+            try {
+                rosters.add(future.get());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        executorService.shutdown();
+        return rosters;
+    }
+
+
+
+
+
+    public String fetch_player_season_career_stats(String player_url ){
+        driver.get(player_url); // Send the url to the driver
+        WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(10));
+        wait.until(ExpectedConditions.jsReturnsValue("return document.readyState == 'complete';"));
+        String htmlSource = driver.getPageSource(); // Extract the entire page's HTML
+        //driver.close();//wait until we have all of our data before closing the connection
+
+        return htmlSource ;
+    }
+
+
+    public void update_season_career_stats(){
+        List rosters = fetchRostersConcurrently();
+        String playerNameId[] ;
+        for(Object roster : (List)rosters) {
+            for (Object member : (List)roster) {
+                String player = (String) member ;
+                playerNameId = player.split("/");
+                playerNameId = playerNameId[2].split("-") ;
+                //String urlEnding = el.attr("href"); // Select the "href" elements where the url ending lies
+                String playerUrl = String.format("https://www.mlb.com%s", player);
+                //stat_prep(fetch_player_season_career_stats(playerUrl));
+            }
+        }
+        driver.close();//wait until we have all of our data before closing the connection
+
+    }
+
+
+    /* a prototype of the fecth_player_stats_career function
+
+     */
+    public List stat_prep(String i){
+        List stats = new ArrayList<>() ;
+        try{
+            File input = new File("out.txt"); // Replace from this line up with the Selenium code
+            Document doc = Jsoup.parse(input, "UTF-8"); // Parse through the
+            Elements table = doc.select("#careerTable .responsive-datatable__pinned");
+            Elements byYearRows = table.select("tbody tr");
+            Elements seasonCells = table.select("tfoot td");
+            Elements tableHeadings = table.select("thead th");
+
+            // Create a string to store the headings
+            String headingCsv = "";
+            for (var th : tableHeadings) {
+                headingCsv += th.text() + ",";
+            }
+            if (headingCsv.endsWith(",")) {
+                headingCsv = headingCsv.substring(0, headingCsv.length() - 1);
+            }
+            //System.out.println(headingCsv);
+            stats.add(headingCsv) ;
+
+            for (var row : byYearRows) {
+                Elements tds = row.select( "td" );
+
+                String careerCsv = "";
+                for (var td : tds) {
+                    careerCsv += td.text() + ",";
+                }
+                if (careerCsv.endsWith(",")) {
+                    careerCsv = careerCsv.substring(0, careerCsv.length()-1);
+                }
+
+                //System.out.println(careerCsv);
+                stats.add(careerCsv) ;
+
+            }
+
+            String careerCsv = "";
+            for (var td : seasonCells) {
+                careerCsv += td.text() + ",";
+            }
+            if (careerCsv.endsWith(",")) {
+                careerCsv = careerCsv.substring(0, careerCsv.length()-1);}
+
+            //System.out.println(careerCsv);
+            stats.add(careerCsv) ;
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return stats ;
+    }
+
+
+
+
+
+}
+
+
+
+
