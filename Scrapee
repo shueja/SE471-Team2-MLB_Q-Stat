@@ -162,7 +162,7 @@ public class MlbScraper2 {
     public List stat_prep(String i){
         List stats = new ArrayList<>() ;
         try{
-            File input = new File("out.txt"); // Replace from this line up with the Selenium code
+            File input = new File(i); // Replace from this line up with the Selenium code
             Document doc = Jsoup.parse(input, "UTF-8"); // Parse through the
             Elements table = doc.select("#careerTable .responsive-datatable__pinned");
             Elements byYearRows = table.select("tbody tr");
