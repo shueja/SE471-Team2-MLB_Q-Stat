@@ -1,0 +1,32 @@
+ SELECT
+    player_name,
+    Season,
+    AVG(W) AS avg_wins,
+    AVG(L) AS avg_losses,
+    AVG(ERA) AS avg_era,
+    AVG(G) AS avg_games,
+    AVG(GS) AS avg_games_started,
+    AVG(IP) AS avg_innings_pitched,
+    AVG(H) AS avg_hits,
+    AVG(R) AS avg_runs,
+    AVG(ER) AS avg_earned_runs,
+    AVG(HR) AS avg_home_runs,
+    AVG(NP) AS avg_pitches,
+    AVG(BB) AS avg_walks,
+    AVG(SO) AS avg_strikeouts,
+    AVG(AVG) AS avg_batting_average,
+    AVG(WHIP) AS avg_whip,
+    AVG(`GO/AO`) AS avg_go_ao
+FROM (
+    SELECT
+        'Tanner Banks' AS player_name,
+        Season,
+        CAST(W AS REAL) AS W,
+        CAST(L AS REAL) AS L,
+        CAST(ERA AS REAL) AS ERA,
+        CAST(G AS REAL) AS G,
+    FROM tanner_banks
+    WHERE date_column BETWEEN (?????)
+    UNION ALL
+) AS player_stats
+GROUP BY player_name, Season;
