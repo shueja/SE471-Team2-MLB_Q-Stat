@@ -1,66 +1,30 @@
 package org.example;
-import org.openqa.selenium.edge.EdgeDriver;
-import org.openqa.selenium.manager.SeleniumManager;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.io.*;
+import java.sql.Driver;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver ;
-
-
-
-
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver ;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
-import java.util.Vector;
-import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.time.Duration;
-// Import jSoup
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
+import java.io.IOException;
 
 
 
 import java.io.File;
 
-public class MlbScraper2 {
-    WebDriver driver ;
+public class MlbAPI {
+
 
 
     public static String[] teamNames = new String[]{
@@ -70,18 +34,11 @@ public class MlbScraper2 {
             "Athletics", "Dodgers", "Mariners", "Padres", "rangers", "Giants"
     };
 
-    public MlbScraper2() {
-
-            driver = new FirefoxDriver();
 
 
 
-    }
-
-
-
-    public List<String> fetchRoster(String team) {
-        List<String> roster = new ArrayList<>();
+    public Stack<String> fetchRoster(String team) {
+        Stack<String> roster = new Stack<>();
         try {
             String urlName = String.format("https://www.mlb.com/%s/roster", team.toLowerCase().replace(" ", ""));
             Document doc = Jsoup.connect(urlName).get();
@@ -95,7 +52,7 @@ public class MlbScraper2 {
         return roster;
     }
 
-    public List fetchRosters() {
+    public List fetchRosters(){
         List rosters = new ArrayList<>();
         for (String team : teamNames) {
             //System.out.print("Working... " + team + " ");
@@ -104,14 +61,14 @@ public class MlbScraper2 {
         return rosters;
     }
 
-    public List<List<String>> fetchRostersConcurrently() {
-        List<List<String>> rosters = new ArrayList<>();
+    public Stack<Stack<String>> fetchRostersConcurrently() {
+        Stack<Stack<String>> rosters = new Stack<>();
         ExecutorService executorService = Executors.newFixedThreadPool(1000); // Adjust the pool size
-
+        System.out.println("Fetching team Rosters...");
         for (String team : teamNames) {
             final String finalTeam = team;
             //System.out.print("Working... " + finalTeam + " ");
-            Future<List<String>> future = executorService.submit(() -> fetchRoster(finalTeam));
+            Future<Stack<String>> future = executorService.submit(() -> fetchRoster(finalTeam));
             try {
                 rosters.add(future.get());
             } catch (Exception e) {
@@ -126,43 +83,65 @@ public class MlbScraper2 {
 
 
 
-    public String fetch_player_season_career_stats(String player_url ){
-        System.out.println(player_url);
-        driver.get(player_url); // Send the url to the driver
-        WebDriverWait wait = new WebDriverWait(driver,Duration.ofSeconds(10));
-        wait.until(ExpectedConditions.jsReturnsValue("return document.readyState == 'complete';"));
-        String htmlSource = driver.getPageSource(); // Extract the entire page's HTML
-        //driver.close();//wait until we have all of our data before closing the connection
+    public String fetch_player_season_career_stats(String player_url,WebDriver driver){
 
-        return htmlSource ;
+                System.out.println(player_url);
+                driver.get(player_url); // Send the url to the driver
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+                wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#careerTable .responsive-datatable__pinned")));
+                String htmlSource = driver.getPageSource(); // Extract the entire page's HTML
+
+
+
+        return htmlSource;
     }
 
 
-    public void update_season_career_stats(){
-        List rosters = fetchRostersConcurrently();
-        String playerNameId[] ;
-        for(Object roster : (List)rosters) {
-            for (Object member : (List)roster) {
-                String player = (String) member ;
-                playerNameId = player.split("/");
-                playerNameId = playerNameId[2].split("-") ;
-                //String urlEnding = el.attr("href"); // Select the "href" elements where the url ending lies
-                String playerUrl = String.format("https://www.mlb.com%s", player);
-                System.out.println(stat_prep(fetch_player_season_career_stats(playerUrl)));
-            }
-        }
-        driver.close();//wait until we have all of our data before closing the connection
+    public List fetchSeasonAndCareerStats(Stack Team) {
+        List stats = new ArrayList<>();
+        String playerNameId[];
+        String playerIdName;
 
+        //for(Object roster : (List)rosters) {
+        // for (Object member : (List)roster) {
+        ChromeOptions option = new ChromeOptions();
+        option.addArguments("--headless");
+        option.addArguments("--disable-gpu");
+        WebDriver driver = new ChromeDriver(option) ;
+        try{
+
+
+        while(!Team.isEmpty()) {
+            String player = (String) Team.pop();
+
+
+
+            System.out.println(namePrep(player));
+            String playerUrl = String.format("https://www.mlb.com%s", player);
+            stats.add(stat_prep(fetch_player_season_career_stats(playerUrl,driver), namePrep(player)));
+        }
+        }
+        catch(Exception e){
+            driver.quit();
+            option.addArguments("--headless");
+            option.addArguments("--disable-gpu");
+             driver = new ChromeDriver(option) ;
+
+
+        }
+        driver.quit();
+        return stats;
     }
 
 
     /* a prototype of the fecth_player_stats_career function
 
      */
-    public List stat_prep(String i){
+    public List stat_prep(String input, String playerIdName){
         List stats = new ArrayList<>() ;
+        String headingCsv = "Player Name,Player ID,";
         try{
-            File input = new File(i); // Replace from this line up with the Selenium code
+            //File input = new File(i); // Replace from this line up with the Selenium code
             Document doc = Jsoup.parse(input, "UTF-8"); // Parse through the
             Elements table = doc.select("#careerTable .responsive-datatable__pinned");
             Elements byYearRows = table.select("tbody tr");
@@ -170,7 +149,7 @@ public class MlbScraper2 {
             Elements tableHeadings = table.select("thead th");
 
             // Create a string to store the headings
-            String headingCsv = "";
+
             for (var th : tableHeadings) {
                 headingCsv += th.text() + ",";
             }
@@ -178,21 +157,21 @@ public class MlbScraper2 {
                 headingCsv = headingCsv.substring(0, headingCsv.length() - 1);
             }
             //System.out.println(headingCsv);
-            stats.add(headingCsv) ;
+            stats.add(headingCsv) ;//add the header String
 
             for (var row : byYearRows) {
                 Elements tds = row.select( "td" );
 
-                String careerCsv = "";
+                String seasonCsv = playerIdName;//The season stat line, player Name and ID added
                 for (var td : tds) {
-                    careerCsv += td.text() + ",";
+                    seasonCsv += td.text() + ",";
                 }
-                if (careerCsv.endsWith(",")) {
-                    careerCsv = careerCsv.substring(0, careerCsv.length()-1);
+                if (seasonCsv.endsWith(",")) {
+                    seasonCsv = seasonCsv.substring(0, seasonCsv.length()-1);
                 }
 
                 //System.out.println(careerCsv);
-                stats.add(careerCsv) ;
+                stats.add(seasonCsv) ;
 
             }
 
@@ -208,6 +187,22 @@ public class MlbScraper2 {
         }catch(Exception e){
             e.printStackTrace();
         }
+
         return stats ;
     }
+
+    private String namePrep(String player){
+        String[] playerNameId = player.split("/");
+        playerNameId = playerNameId[2].split("-");
+        String playerName = "";
+        int length = playerNameId.length-1 ;
+        for(int i = 0; i < length-1 ; i++) {
+            playerNameId[i] = playerNameId[i].substring(0,1).toUpperCase() + playerNameId[i].substring(1);
+            playerName += playerNameId[i] + " ";
+        }
+
+        playerName += playerNameId[length-1].substring(0,1).toUpperCase() + playerNameId[length-1].substring(1) + "," + playerNameId[playerNameId.length-1] + ",";
+        return playerName ;
+    }
+
 }
