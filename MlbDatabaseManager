@@ -1,0 +1,131 @@
+package org.example;
+
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.*;
+
+/**
+ * Manages the connection to the MLB database and updates player statistics.
+ */
+public class MlbDatabaseManager {
+    private static final String DATABASE_PATH = "jdbc:sqlite:MLBdatabase.db";
+
+    private Connection connection; // Connection for the database
+    private MlbAPI scraper; // The web scraping API
+
+    /**
+     * Constructs an instance of MlbDatabaseManager, establishes a connection to the database,
+     * and initializes the web scraping API.
+     */
+    public MlbDatabaseManager() {
+        this.connection = null;
+        try {
+            // Load the SQLite JDBC driver
+            Class.forName("org.sqlite.JDBC");
+
+            // Connect to the database
+            connection = DriverManager.getConnection(DATABASE_PATH);
+
+            System.out.println("Connected to the MLB database.");
+
+            // Initialize the web scraping API
+            scraper = new MlbAPI();
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection();
+        }
+    }
+
+    /**
+     * Updates player statistics based on web scraping data and writes the data to files.
+     */
+    public void updateStats() {
+        Stack<Stack<String>> rosters = scraper.fetchRostersConcurrently();
+        Vector<String> pitchers = new Vector<>(), hitters = new Vector<>();
+        int pitcherFlag = 0, hitterFlag = 0, updateStatus = rosters.size(), updateCount = 0;
+
+        while (!rosters.isEmpty()) {
+            System.out.println("Update progress: " + (double)((updateCount/updateStatus) *100));
+            List<?> team = scraper.fetchSeasonAndCareerStats( rosters.pop());
+            updateCount++ ;//update the status counter
+            for (Object player : team) {
+                List<?> playerStats = (List<?>) player;
+                String checkString = (String) playerStats.get(playerStats.size() - 1);
+
+                if (!checkString.contains("Minors Career")) {
+                    checkString = (String) playerStats.get(0);
+
+                    if (checkString.contains("AB")) {
+                        addDataToVector(playerStats, hitters, hitterFlag);
+                        hitterFlag = 1;
+                    } else {
+                        addDataToVector(playerStats, pitchers, pitcherFlag);
+                        pitcherFlag = 1;
+                    }
+                }
+            }
+
+            // Write the collected data to files
+            writeDataToFile("hitters.csv", hitters);
+            writeDataToFile("pitchers.csv", pitchers);
+        }
+    }
+
+    /**
+     * Writes data to a file with the specified name.
+     *
+     * @param fileName The name of the file.
+     * @param data     The data to be written to the file.
+     */
+    private void writeDataToFile(String fileName, Vector<String> data) {
+        try (FileWriter fileWriter = new FileWriter(fileName)) {
+            for (String line : data) {
+                fileWriter.write(line);
+                fileWriter.write(System.lineSeparator());
+            }
+            System.out.println("Data has been written to " + fileName + " successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Adds player statistics to the specified vector.
+     *
+     * @param playerStats The statistics of the player.
+     * @param vector      The vector to which the data should be added.
+     * @param flag        The flag indicating the current state.
+     */
+    private void addDataToVector(List<?> playerStats, Vector<String> vector, int flag) {
+        for (Object line : playerStats.subList(flag, playerStats.size() - 1)) {
+            vector.add((String) line);
+        }
+    }
+
+    /**
+     * Closes the database connection.
+     */
+    private void closeConnection() {
+        try {
+            if (connection != null) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Closes resources.
+     */
+//    public void closeResources() {
+//        // Close the web scraping API
+//        if (scraper != null) {
+//            scraper.close(); // Assuming MlbAPI implements AutoCloseable or Closeable
+//        }
+//    }
+}
