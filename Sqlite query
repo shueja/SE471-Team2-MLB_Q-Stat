@@ -19,14 +19,14 @@
     AVG(`GO/AO`) AS avg_go_ao
 FROM (
     SELECT
-        'Tanner Banks' AS player_name,
+        '....' AS player_name,
         Season,
         CAST(W AS REAL) AS W,
         CAST(L AS REAL) AS L,
         CAST(ERA AS REAL) AS ERA,
         CAST(G AS REAL) AS G,
-    FROM tanner_banks
-    WHERE date_column BETWEEN (?????)
+    FROM ....
+    WHERE date_column BETWEEN (????)
     UNION ALL
 ) AS player_stats
 GROUP BY player_name, Season;
