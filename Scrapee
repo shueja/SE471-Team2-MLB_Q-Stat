@@ -107,7 +107,7 @@ public class MlbAPI {
         ChromeOptions option = new ChromeOptions();
         option.addArguments("--headless");
         option.addArguments("--disable-gpu");
-        WebDriver driver = new ChromeDriver(option) ;
+        WebDriver driver = new ChromeDriver() ;
         try{
 
 
@@ -125,7 +125,7 @@ public class MlbAPI {
             driver.quit();
             option.addArguments("--headless");
             option.addArguments("--disable-gpu");
-             driver = new ChromeDriver(option) ;
+             driver = new ChromeDriver(jmn) ;
 
 
         }
