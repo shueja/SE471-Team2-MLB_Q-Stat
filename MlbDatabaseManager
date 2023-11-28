@@ -6,6 +6,15 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Manages the connection to the MLB database and updates player statistics.
@@ -45,14 +54,22 @@ public class MlbDatabaseManager {
      */
     public void updateStats() {
         Stack<Stack<String>> rosters = scraper.fetchRostersConcurrently();
-        Vector<String> pitchers = new Vector<>(), hitters = new Vector<>();
-        int pitcherFlag = 0, hitterFlag = 0, updateStatus = rosters.size(), updateCount = 0;
+
+
+        List<List> teams = new ArrayList<>() ;
 
         while (!rosters.isEmpty()) {
-            System.out.println("Update progress: " + (double)((updateCount/updateStatus) *100));
-            List<?> team = scraper.fetchSeasonAndCareerStats( rosters.pop());
-            updateCount++ ;//update the status counter
-            for (Object player : team) {
+            teams.add(scraper.fetchSeasonAndCareerStats( rosters.pop()));
+
+        }
+    }
+
+    public void makeCSV(List teams){
+        int pitcherFlag = 0, hitterFlag = 0;
+        Vector<String> pitchers = new Vector<>(), hitters = new Vector<>();
+
+        for(Object team: teams) {
+            for (Object player :(List) team) {
                 List<?> playerStats = (List<?>) player;
                 String checkString = (String) playerStats.get(playerStats.size() - 1);
 
@@ -73,6 +90,7 @@ public class MlbDatabaseManager {
             writeDataToFile("hitters.csv", hitters);
             writeDataToFile("pitchers.csv", pitchers);
         }
+
     }
 
     /**
@@ -118,7 +136,38 @@ public class MlbDatabaseManager {
             e.printStackTrace();
         }
     }
+    public void updateStatsP() {
+        Stack<Stack<String>> rosters = scraper.fetchRostersConcurrently();
+        ExecutorService executorService = Executors.newFixedThreadPool(1000); // Adjust the pool size
 
+
+        List<List<?>> teams = new ArrayList<>();
+        List<Future<List<?>>> futures = new ArrayList<>();
+
+        while (!rosters.isEmpty()) {
+            Stack<String> roster = rosters.pop();
+            futures.add(executorService.submit(() -> scraper.fetchSeasonAndCareerStats(roster)));
+        }
+
+
+            List<Object> team = new ArrayList<>();
+
+            for (Future<List<?>> future : futures) {
+                try {
+                    team.addAll(future.get());
+                } catch (Exception e) {
+                    e.printStackTrace(); // Handle exceptions as needed
+                }
+                teams.add(team);
+            }
+
+
+            executorService.shutdown();
+        }
+
+        // Now, teams list contains the season and career stats for each player
+        // You can further process the data or perform any additional operations here.
+    }
     /**
      * Closes resources.
      */
@@ -128,4 +177,3 @@ public class MlbDatabaseManager {
 //            scraper.close(); // Assuming MlbAPI implements AutoCloseable or Closeable
 //        }
 //    }
-}
