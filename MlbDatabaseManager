@@ -6,15 +6,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.HashSet;
 
 /**
  * Manages the connection to the MLB database and updates player statistics.
@@ -22,15 +15,15 @@ import java.util.concurrent.ExecutionException;
 public class MlbDatabaseManager {
     private static final String DATABASE_PATH = "jdbc:sqlite:MLBdatabase.db";
 
-    private Connection connection; // Connection for the database
-    private MlbAPI scraper; // The web scraping API
+    //private Connection connection; // Connection for the database
+
 
     /**
      * Constructs an instance of MlbDatabaseManager, establishes a connection to the database,
      * and initializes the web scraping API.
      */
-    public MlbDatabaseManager() {
-        this.connection = null;
+    private Connection ConnectToDataBase() {
+        Connection connection = null;
         try {
             // Load the SQLite JDBC driver
             Class.forName("org.sqlite.JDBC");
@@ -41,55 +34,93 @@ public class MlbDatabaseManager {
             System.out.println("Connected to the MLB database.");
 
             // Initialize the web scraping API
-            scraper = new MlbAPI();
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
-        } finally {
-            closeConnection();
         }
+        return connection;
     }
 
-    /**
-     * Updates player statistics based on web scraping data and writes the data to files.
-     */
-    public void updateStats() {
-        Stack<Stack<String>> rosters = scraper.fetchRostersConcurrently();
+
+    public void makeCSV(){
+        MlbAPI scraper = new MlbAPI();
+        boolean getPlayerStats = true; //temporarily set to false
+        if(getPlayerStats) {
+
+            int pitcherFlag = 0, hitterFlag = 0;
+            Vector<String> pitchersSeason = new Vector<>(), hittersSeason = new Vector<>(), pitchersCareer = new Vector<>(), hittersCareer = new Vector<>(),
+                    pitchersGameLogs = new Vector<>(), hittersGameLogs = new Vector<>();
+            List<String> hitterLogs = new ArrayList();
+            List<String> pitcherLogs = new ArrayList<>();
+            ;
+            List teams = scraper.updateStatsSeasonCareer();
+            for (Object team : teams) {
+                String playerName = "";
 
 
-        List<List> teams = new ArrayList<>() ;
+                for (Object player : (List) team) {
+                    List<?> playerStats = (List<?>) player;
+                    String checkString = (String) playerStats.get(playerStats.size() - 1);
 
-        while (!rosters.isEmpty()) {
-            teams.add(scraper.fetchSeasonAndCareerStats( rosters.pop()));
+                    if (!checkString.contains("Minors Career")) {
+                        checkString = (String) playerStats.get(0);
 
-        }
-    }
-
-    public void makeCSV(List teams){
-        int pitcherFlag = 0, hitterFlag = 0;
-        Vector<String> pitchers = new Vector<>(), hitters = new Vector<>();
-
-        for(Object team: teams) {
-            for (Object player :(List) team) {
-                List<?> playerStats = (List<?>) player;
-                String checkString = (String) playerStats.get(playerStats.size() - 1);
-
-                if (!checkString.contains("Minors Career")) {
-                    checkString = (String) playerStats.get(0);
-
-                    if (checkString.contains("AB")) {
-                        addDataToVector(playerStats, hitters, hitterFlag);
-                        hitterFlag = 1;
-                    } else {
-                        addDataToVector(playerStats, pitchers, pitcherFlag);
-                        pitcherFlag = 1;
+                        if (checkString.contains("AB")) {
+                            addDataToVector(playerStats, hittersSeason, hittersCareer, hitterFlag);
+                            hitterFlag = 1;
+                        } else {
+                            addDataToVector(playerStats, pitchersSeason, pitchersCareer, pitcherFlag);
+                            pitcherFlag = 1;
+                        }
                     }
                 }
+                // Write the collected data to files
+                writeDataToFile("hittersSeason.csv", hittersSeason);
+                writeDataToFile("hittersCareer.csv", hittersCareer);
+                writeDataToFile("pitchersSeason.csv", pitchersSeason);
+                writeDataToFile("pitchersCareer.csv", pitchersCareer);
             }
 
-            // Write the collected data to files
-            writeDataToFile("hitters.csv", hitters);
-            writeDataToFile("pitchers.csv", pitchers);
+//            hitterFlag = 0;
+//            pitcherFlag = 0;
+//            for (Object player : (List) hitting) {
+//                List<?> playerStats = (List<?>) player;
+//                addDataToVector(playerStats, hittersGameLogs, hittersCareer, hitterFlag);
+//                hitterFlag = 1;
+//            }
+//            for (Object player : (List) pitching) {
+//                List<?> playerStats = (List<?>) player;
+//                addDataToVector(playerStats, pitchersGameLogs, hittersCareer, pitcherFlag);
+//                pitcherFlag = 1;
+//            }
+            teams = scraper.updateGameLogs();
+            for (Object team : teams) {
+                String playerName = "";
+
+
+                for (Object player : (List) team) {
+                    List<?> playerStats = (List<?>) player;
+                    String checkString = (String) playerStats.get(playerStats.size() - 1);
+
+                    if (!checkString.contains("Minors Career")) {
+                        checkString = (String) playerStats.get(0);
+
+                        if (checkString.contains("AB")) {
+                            addDataToVector(playerStats, hittersGameLogs, hittersCareer, hitterFlag);
+                            hitterFlag = 1;
+                        } else {
+                            addDataToVector(playerStats, pitchersGameLogs, pitchersCareer, pitcherFlag);
+                            pitcherFlag = 1;
+                        }
+                    }
+                }
+                // Write the collected data to files
+                writeDataToFile("hittingGameLogs.csv", hittersGameLogs);
+                writeDataToFile("pitchingGameLogs.csv", pitchersGameLogs);
+            }
+
         }
+        scraper.fetchTeamStats() ;
+
 
     }
 
@@ -105,7 +136,6 @@ public class MlbDatabaseManager {
                 fileWriter.write(line);
                 fileWriter.write(System.lineSeparator());
             }
-            System.out.println("Data has been written to " + fileName + " successfully.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -115,62 +145,44 @@ public class MlbDatabaseManager {
      * Adds player statistics to the specified vector.
      *
      * @param playerStats The statistics of the player.
-     * @param vector      The vector to which the data should be added.
+     * @param seasons      The vector to which the season stat line data should be added.
+     * @param careers      The vector to which the career stat line data should be added.
      * @param flag        The flag indicating the current state.
      */
-    private void addDataToVector(List<?> playerStats, Vector<String> vector, int flag) {
+    private String addDataToVector(List<?> playerStats, Vector<String> seasons,Vector<String> careers, int flag) {
         for (Object line : playerStats.subList(flag, playerStats.size() - 1)) {
-            vector.add((String) line);
+            seasons.add((String) line);
         }
+        if(flag == 0)
+            careers.add((String) playerStats.get(0));
+        careers.add((String) playerStats.get(playerStats.size()-1));
+        String playerNameAndId = (String) playerStats.get(1);
+        String playerNameAndIdArr[] = playerNameAndId.split(",");
+        playerNameAndId = playerNameAndIdArr[0] + "," + playerNameAndIdArr[1] ;
+        return playerNameAndId.toLowerCase() ;
     }
+//    public boolean UpDateDatabase(List CSV){
+//      Connection connection = ConnectToDataBase() ;
+//        try (Connection connection = DriverManager.getConnection(databaseUrl);
+//             Statement statement = connection.createStatement()) {
+//
+//            // Create the table if it doesn't exist
+//            statement.execute("CREATE TABLE IF NOT EXISTS " + tableName + "(column1 TEXT, column2 TEXT, ...)");
+//
+//            // Import data from CSV
+//            String importCsvQuery = "INSERT INTO " + tableName + " SELECT * FROM CSVREAD('" + csvFilePath + "');";
+//            statement.execute(importCsvQuery);
+//
+//            System.out.println("CSV data imported successfully.");
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+}
 
-    /**
-     * Closes the database connection.
-     */
-    private void closeConnection() {
-        try {
-            if (connection != null) {
-                connection.close();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    public void updateStatsP() {
-        Stack<Stack<String>> rosters = scraper.fetchRostersConcurrently();
-        ExecutorService executorService = Executors.newFixedThreadPool(1000); // Adjust the pool size
-
-
-        List<List<?>> teams = new ArrayList<>();
-        List<Future<List<?>>> futures = new ArrayList<>();
-
-        while (!rosters.isEmpty()) {
-            Stack<String> roster = rosters.pop();
-            futures.add(executorService.submit(() -> scraper.fetchSeasonAndCareerStats(roster)));
-        }
-
-
-            List<Object> team = new ArrayList<>();
-
-            for (Future<List<?>> future : futures) {
-                try {
-                    team.addAll(future.get());
-                } catch (Exception e) {
-                    e.printStackTrace(); // Handle exceptions as needed
-                }
-                teams.add(team);
-            }
-
-
-            executorService.shutdown();
-        }
-
-        // Now, teams list contains the season and career stats for each player
-        // You can further process the data or perform any additional operations here.
-    }
-    /**
-     * Closes resources.
-     */
+/**
+ * Closes resources.
+ */
 //    public void closeResources() {
 //        // Close the web scraping API
 //        if (scraper != null) {
