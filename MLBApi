@@ -1,0 +1,499 @@
+package org.example;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
+public class MlbAPI {
+
+
+
+    public static String[] teamNames = new String[]{
+            "White Sox", "Cubs", "Guardians", "Reds", "Tigers", "Brewers", "Royals", "Pirates",
+            "Twins", "Cardinals", "Orioles", "Braves", "Red Sox", "Marlins", "Yankees", "Mets",
+            "Rays", "Phillies", "bluejays", "Nationals", "Astros", "dbacks", "Angels", "Rockies",
+            "Athletics", "Dodgers", "Mariners", "Padres", "rangers", "Giants"
+    };
+//    public static String[] teamNames = new String[]{
+//            "White Sox", "Cubs", "Guardians"
+//    };
+
+
+
+
+    public Stack<String> fetchRoster(String team) {
+        Stack<String> roster = new Stack<>();
+        try {
+            String urlName = String.format("https://www.mlb.com/%s/roster", team.toLowerCase().replace(" ", ""));
+            Document doc = Jsoup.connect(urlName).get();
+            Elements link = doc.select("td.info > a");
+            for (Element el : link) {
+                roster.add(el.attr("href"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return roster;
+    }
+
+    public List fetchRosters(){
+        List rosters = new ArrayList<>();
+        for (String team : teamNames) {
+            //System.out.print("Working... " + team + " ");
+            rosters.add(fetchRoster(team));
+        }
+        return rosters;
+    }
+
+    public Stack<Stack<String>> fetchRostersConcurrently() {
+        Stack<Stack<String>> rosters = new Stack<>();
+        ExecutorService executorService = Executors.newFixedThreadPool(1000); // Adjust the pool size
+        System.out.println("Fetching team Rosters...");
+        for (String team : teamNames) {
+            final String finalTeam = team;
+            //System.out.print("Working... " + finalTeam + " ");
+            Future<Stack<String>> future = executorService.submit(() -> fetchRoster(finalTeam));
+            try {
+                rosters.add(future.get());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        executorService.shutdown();
+        return rosters;
+    }
+
+
+
+
+
+
+
+
+    public List fetchSeasonAndCareerStats(Stack Team) {
+        List stats = new ArrayList<>();
+        ChromeOptions option = new ChromeOptions();
+        option.addArguments("--headless");
+        option.addArguments("--disable-gpu");
+        WebDriver driver = new ChromeDriver(option) ;
+        while(!Team.isEmpty()) {
+            String player = (String) Team.pop();
+            try {
+                String playerUrl = String.format("https://www.mlb.com%s", player);
+                String name = namePrep(player);
+                String webPage = fetch_player_season_career_stats(playerUrl, driver) ;
+                stats.add(stat_prep_seasons_career(webPage, name));
+            } catch (Exception e) {
+                driver.quit();
+                option.addArguments("--headless");
+                option.addArguments("--disable-gpu");
+                driver = new ChromeDriver(option);
+
+
+            }
+        }
+
+        driver.quit();
+        return stats;
+    }
+
+    public String fetch_player_season_career_stats(String player_url,WebDriver driver){
+        driver.get(player_url); // Send the url to the driver
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#careerTable .responsive-datatable__pinned")));
+        String htmlSource = driver.getPageSource(); // Extract the entire page's HTML
+        return htmlSource;
+    }
+
+
+
+    public List stat_prep_seasons_career(String input, String playerIdName){
+        List stats = new ArrayList<>() ;
+        String headingCsv = "Player Name,Player ID,";
+        try{
+            //File input = new File(i); // Replace from this line up with the Selenium code
+            Document doc = Jsoup.parse(input, "UTF-8"); // Parse through the
+            Elements table = doc.select("#careerTable .responsive-datatable__pinned");
+            Elements byYearRows = table.select("tbody tr");
+            Elements seasonCells = table.select("tfoot td");
+            Elements tableHeadings = table.select("thead th");
+
+            // Create a string to store the headings
+
+            for (var th : tableHeadings) {
+                headingCsv += th.text() + ",";
+            }
+            if (headingCsv.endsWith(",")) {
+                headingCsv = headingCsv.substring(0, headingCsv.length() - 1);
+            }
+            //System.out.println(headingCsv);
+            stats.add(headingCsv) ;//add the header String
+
+            for (var row : byYearRows) {
+                Elements tds = row.select( "td" );
+
+                String seasonCsv = playerIdName;//The season stat line, player Name and ID added
+                for (var td : tds) {
+                    seasonCsv += td.text() + ",";
+                }
+                if (seasonCsv.endsWith(",")) {
+                    seasonCsv = seasonCsv.substring(0, seasonCsv.length()-1);
+                }
+
+                //System.out.println(careerCsv);
+                stats.add(seasonCsv) ;
+
+            }
+
+            String careerCsv = playerIdName;//The career stat line, player Name and ID added;
+            for (var td : seasonCells) {
+                careerCsv += td.text() + ",";
+            }
+            if (careerCsv.endsWith(",")) {
+                careerCsv = careerCsv.substring(0, careerCsv.length()-1);}
+
+            //System.out.println(careerCsv);
+            stats.add(careerCsv) ;
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return stats ;
+    }
+
+    private String namePrep(String player){
+        String[] playerNameId = player.split("/");
+        playerNameId = playerNameId[2].split("-");
+        String playerName = "";
+        int length = playerNameId.length-1 ;
+        for(int i = 0; i < length-1 ; i++) {
+            playerNameId[i] = playerNameId[i].substring(0,1).toUpperCase() + playerNameId[i].substring(1);
+            playerName += playerNameId[i] + " ";
+        }
+
+        playerName += playerNameId[length-1].substring(0,1).toUpperCase() + playerNameId[length-1].substring(1) + "," + playerNameId[playerNameId.length-1] + ",";
+        return playerName ;
+    }
+
+
+
+
+    public List updateStatsSeasonCareer() {
+        List<List<?>> teams = new ArrayList<>();
+        Stack<Stack<String>> rosters = fetchRostersConcurrently();
+        ExecutorService executorService = Executors.newFixedThreadPool(16); // Adjust the pool size
+
+
+        List<Future<List<?>>> futures = new ArrayList<>();
+
+        while (!rosters.isEmpty()) {
+            Stack<String> roster = rosters.pop();
+            futures.add(executorService.submit(() -> fetchSeasonAndCareerStats(roster)));
+        }
+
+
+        List<Object> team = new ArrayList<>();
+
+        for (Future<List<?>> future : futures) {
+            try {
+                team.addAll(future.get());
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exceptions as needed
+            }
+            teams.add(team);
+        }
+
+
+        executorService.shutdown();
+        return  teams;
+    }
+
+
+//    public List updateGameLogs() {
+//        Stack<Stack<String>> rosters = fetchRostersConcurrently();
+//        ExecutorService executorService = Executors.newFixedThreadPool(16); // Adjust the pool size
+//
+//
+//        List<List<?>> teams = new ArrayList<>();
+//        List<Future<List<?>>> futures = new ArrayList<>();
+//
+//        while (!rosters.isEmpty()) {
+//            Stack<String> roster = rosters.pop();
+//            futures.add(executorService.submit(() -> fetch_player_Game_Logs(String.valueOf(roster))));
+//        }
+//
+//
+//        List<Object> team = new ArrayList<>();
+//
+//        for (Future<List<?>> future : futures) {
+//            try {
+//                team.addAll(future.get());
+//            } catch (Exception e) {
+//                e.printStackTrace(); // Handle exceptions as needed
+//            }
+//            teams.add(team);
+//        }
+//
+//
+//        executorService.shutdown();
+//        return  teams;
+//    }
+//
+//
+////    public List updateGameLogs(List logs, char flag) {
+////        List stats = new ArrayList<>();
+////        HashSet<String> uniqueSet = new HashSet<>(logs);
+////        logs.clear();
+////        logs.addAll(uniqueSet);
+////        String urlbase = ";";
+////                if(flag == 'h')
+////                    urlbase = "https://www.mlb.com/player/%s?stats=gamelogs-r-hitting-mlb&year=2023" ;
+////                else
+////                    urlbase = "https://www.mlb.com/player/%s?stats=gamelogs-r-pitching-mlb&year=2023";
+////
+////
+////
+////
+////
+////        // Create an ExecutorService with a fixed number of threads (10 in this case)
+////        ExecutorService executorService = Executors.newFixedThreadPool(16);
+////        for(int i = 0; i < logs.size(); i++){
+////            int finalI = i;
+////            executorService.execute(() -> {
+////                    if(finalI < logs.size()) {
+////                        try {
+////
+////                            String playerNameAndIdArr[] = ((String) logs.get(finalI)).split(",");
+////                            String playerNameAndId = playerNameAndIdArr[0].replace(" ", "-");
+////                            playerNameAndId += "-" + playerNameAndIdArr[1];
+////                            String playerUrl = String.format("https://www.mlb.com/player/%s?stats=gamelogs-r-hitting-mlb&year=2023", playerNameAndId);
+////
+////                            // Assuming stat_prep_GameLogs and fetch_player_Game_Logs are your methods
+////                            stats.add(stat_prep_GameLogs(fetch_player_Game_Logs(playerUrl), (String) logs.get(finalI)));
+////                        } catch (Exception e) {
+////                            e.printStackTrace();
+////                        }
+////                    }
+////                });
+////
+////            }
+////
+////        // Shutdown the executor and wait for all tasks to complete
+////        executorService.shutdown();
+////        try {
+////            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+////        } catch (InterruptedException e) {
+////            e.printStackTrace();
+////        }
+////
+////
+////        return stats;
+////    }
+
+
+    public List updateGameLogs() {
+        List<List<?>> teams = new ArrayList<>();
+        Stack<Stack<String>> rosters = fetchRostersConcurrently();
+        ExecutorService executorService = Executors.newFixedThreadPool(16); // Adjust the pool size
+
+
+        List<Future<List<?>>> futures = new ArrayList<>();
+
+        while (!rosters.isEmpty()) {
+            Stack<String> roster = rosters.pop();
+            futures.add(executorService.submit(() -> fetchGameLogs(roster)));
+        }
+
+
+        List<Object> team = new ArrayList<>();
+
+        for (Future<List<?>> future : futures) {
+            try {
+                team.addAll(future.get());
+            } catch (Exception e) {
+                e.printStackTrace(); // Handle exceptions as needed
+            }
+            teams.add(team);
+        }
+
+
+        executorService.shutdown();
+        return  teams;
+    }
+    public List fetchGameLogs(Stack Team) {
+    List stats = new ArrayList<>();
+    ChromeOptions option = new ChromeOptions();
+    option.addArguments("--headless");
+    option.addArguments("--disable-gpu");
+    WebDriver driver = new ChromeDriver(option) ;
+    while(!Team.isEmpty()) {
+        String player = (String) Team.pop();
+        try {
+            String playerUrl = String.format("https://www.mlb.com/player/%s?stats=gamelogs-r-hitting-mlb&year=2023", player);
+            String name = namePrep(player);
+            String webPage = fetchGameLog(playerUrl, driver) ;
+            stats.add(stat_prep_GameLogs(webPage, name));
+        } catch (Exception e) {
+            driver.quit();
+            option.addArguments("--headless");
+            option.addArguments("--disable-gpu");
+            driver = new ChromeDriver(option);
+
+
+        }
+    }
+
+    driver.quit();
+    return stats;
+}
+
+    public String fetchGameLog(String player_url,WebDriver driver){
+        driver.get(player_url); // Send the url to the driver
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#gamelogsTable .responsive-datatable__pinned")));
+        String htmlSource = driver.getPageSource(); // Extract the entire page's HTML
+        return htmlSource;
+    }
+
+
+    public List stat_prep_GameLogs(String input, String playerIdName) {
+        // Insert this into the code AFTER you get the gamelogs page AND HTML:
+        // Get the game logs header:
+        List stats = new ArrayList<>() ;
+        Document doc = Jsoup.parse(input, "UTF-8"); // Parse through the
+        Elements gameLogsTable = doc.select("#gamelogsTable .responsive-datatable__pinned");
+        Elements gamelogHeading = new Elements();
+        gamelogHeading = gameLogsTable.select("thead th");
+        String headingCsv = "Player Name,Player ID,";; // Initialize the header CSV
+        for (var th : gamelogHeading)
+            headingCsv += th.text() + ",";
+
+        // Ignore the "sort" at the end of the header string + remove trailing ,:
+        headingCsv = headingCsv.substring(0, headingCsv.length() - 6);
+        stats.add(headingCsv);
+
+        /* Get the game logs rows:
+         *
+         * If you want the month total in the game logs, remove the :not(.total) from the select statement.
+         * If you want the repeat headers in the game logs, remove the :not(.header-repeat) from the select statement.
+         * 			! - Selecting the headers inside the table will return a "sort" element at the end of the string.
+         *
+         */
+        Elements gamelogTr = gameLogsTable.select("tbody tr:not(.header-repeat):not(.total)");
+
+        // Get every tr element in the gamelogTr elements:
+        for (var tr : gamelogTr) {
+            Elements gamelogTds = tr.select("td"); // Select the td elements
+            String rowCsv = playerIdName+",";
+            for (var td : gamelogTds) // Get every td element in the gamelogsTds elements:
+                rowCsv += td.text() + ",";
+            rowCsv = rowCsv.substring(0, rowCsv.length() - 3); // Get rid of the extra parts from the string
+            stats.add(rowCsv);
+
+            // Now, teams list contains the season and career stats for each player
+            // You can further process the data or perform any additional operations here.
+        }
+        return stats ;
+    }
+    public String fetch_player_Game_Logs(String player_url){
+        ChromeOptions option = new ChromeOptions();
+        option.addArguments("--headless");
+        option.addArguments("--disable-gpu");
+        WebDriver driver = new ChromeDriver(option);
+        driver.get(player_url); // Send the url to the driver
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#gamelogsTable .responsive-datatable__pinned")));
+        String htmlSource = driver.getPageSource(); // Extract the entire page's HTML
+        driver.quit();
+
+
+        return htmlSource;
+    }
+
+    public void fetchTeamStats(){
+        ChromeOptions option = new ChromeOptions();
+        option.addArguments("--headless");
+        option.addArguments("--disable-gpu");
+        WebDriver driver = new ChromeDriver(option);
+        driver.get("https://www.espn.com/mlb/stats/team");
+        String page = driver.getPageSource();
+        stat_prep_Team_Stats(page);
+        driver.quit();
+
+
+
+    }
+    public void stat_prep_Team_Stats(String input) {
+
+        // Insert the HTML returned by Selenium and parsed by Jsoup above...
+        Document doc = Jsoup.parse(input, "UTF-8"); // Parse through the
+
+        // Initialize array lists:
+        ArrayList<String> teamsCsv = new ArrayList<String>(); // CSVs
+        ArrayList<String> stats = new ArrayList<String>();    // Team stats separated by commas
+        ArrayList<String> teams = new ArrayList<String>();    // Team names with a comma at the end
+
+        // Select the entire table:
+        Elements teamsTable = doc.select("div.flex");
+        Elements elements = teamsTable.select("a.AnchorLink"); // Select the column with the team names
+
+        // Get the header csv:
+        Elements teamsHeader = doc.select("thead");
+        String headerCsv = "TEAM," + teamsHeader.text(); // Team is manually input since there doesn't exist a thead w/ "TEAM"
+        headerCsv = headerCsv.replace(' ', ','); // Replace the spaces returned by Selenium with ,'s
+        System.out.println(headerCsv);
+
+        // Get the stats:
+        Elements ele = doc.select("tbody.Table__TBODY"); // Select the body of the team stats table
+        Elements ele2 = ele.select("tr"); // Select the tr elements of the body
+        // Go through the rows in the table:
+        for (Element row : ele2) {
+            String stringRow = row.text();
+            // Ignore the strings that return the un-necessary information:
+            if (stringRow.charAt(0) == 'e' || stringRow.charAt(0) == 'z' || stringRow.charAt(0) == 'x' || stringRow.charAt(0) == '*')
+                continue;
+            stats.add(stringRow); // Add to the stats array list
+        }
+
+        // Get the team names:
+        int teamCount = 0;
+        // Go through the names in the table:
+        for (Element name : elements) {
+            String teamName = name.text();
+            // Ignore the strings that return the abbreviated team names:
+            if (teamName.length() == 0 || teamName.length() == 2 || teamName.length() == 3)
+                continue;
+
+            teamCount++; // Count for every team we get
+
+            if (teamCount <= 30) // If we haven't gone through all 30 MLB teams:
+                teams.add(teamName + ","); // Add the team name to the array list with a , at the end
+            else
+                break; // Exit the for loop once we get all the teams
+        }
+
+        teamCount = 0; // Reset team count to 0
+        // Go through the team stats in the array list:
+        for (String teamStats : stats) {
+            teamStats = teamStats.replace(' ', ',');
+            teamsCsv.add(teams.get(teamCount) + teamStats); // Add the completed team csv to the team csv array list
+            System.out.println(teamsCsv.get(teamCount));
+            teamCount++; // Update index counter
+        }
+    }
+
+}
+
