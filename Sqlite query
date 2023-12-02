@@ -30,3 +30,34 @@ WHIP,
 AVG,
 GO/AO
 FROM pitchersCareer
+
+
+HittersCareer:
+
+SELECT DISTINCT
+PLayerName,
+PlayerID,
+Season,
+Team, 
+LG,
+G,
+AB, 
+R,
+H,
+TB,
+"2B",
+"3B",
+HR,
+RBI,
+BB,
+IBB,
+SO,
+SB,
+CS,
+AVG,
+OBP,
+SLG,
+OPS,
+GOAO
+FROM hittersCareer
+
