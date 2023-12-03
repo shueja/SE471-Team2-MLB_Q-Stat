@@ -1,18 +1,23 @@
 package org.example;
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
-
 import java.util.HashSet;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 /**
  * Manages the connection to the MLB database and updates player statistics.
  */
 public class MlbDatabaseManager {
+    // String static createTableScript = ;
     private static final String DATABASE_PATH = "jdbc:sqlite:MLBdatabase.db";
 
     //private Connection connection; // Connection for the database
@@ -41,10 +46,10 @@ public class MlbDatabaseManager {
     }
 
 
-    public void makeCSV(){
+    public void makeCSV() {
         MlbAPI scraper = new MlbAPI();
-        boolean getPlayerStats = true; //temporarily set to false
-        if(getPlayerStats) {
+        boolean getPlayerStats = false; //temporarily set to false
+        if (getPlayerStats) {
 
             int pitcherFlag = 0, hitterFlag = 0;
             Vector<String> pitchersSeason = new Vector<>(), hittersSeason = new Vector<>(), pitchersCareer = new Vector<>(), hittersCareer = new Vector<>(),
@@ -119,7 +124,12 @@ public class MlbDatabaseManager {
             }
 
         }
-        scraper.fetchTeamStats() ;
+        Vector<String> teamStats = new Vector<>();
+        addDataToVector(scraper.fetchTeamStats('h'), teamStats, 1);
+        writeDataToFile("leagueHittingStats.csv", teamStats);
+        teamStats.clear();
+        addDataToVector(scraper.fetchTeamStats('p'), teamStats, 1);
+        writeDataToFile("leaguePitchingStats.csv", teamStats);
 
 
     }
@@ -145,40 +155,66 @@ public class MlbDatabaseManager {
      * Adds player statistics to the specified vector.
      *
      * @param playerStats The statistics of the player.
-     * @param seasons      The vector to which the season stat line data should be added.
-     * @param careers      The vector to which the career stat line data should be added.
+     * @param seasons     The vector to which the season stat line data should be added.
+     * @param careers     The vector to which the career stat line data should be added.
      * @param flag        The flag indicating the current state.
      */
-    private String addDataToVector(List<?> playerStats, Vector<String> seasons,Vector<String> careers, int flag) {
+    private void addDataToVector(List<?> playerStats, Vector<String> seasons, Vector<String> careers, int flag) {
         for (Object line : playerStats.subList(flag, playerStats.size() - 1)) {
             seasons.add((String) line);
         }
-        if(flag == 0)
+        if (flag == 0)
             careers.add((String) playerStats.get(0));
-        careers.add((String) playerStats.get(playerStats.size()-1));
-        String playerNameAndId = (String) playerStats.get(1);
-        String playerNameAndIdArr[] = playerNameAndId.split(",");
-        playerNameAndId = playerNameAndIdArr[0] + "," + playerNameAndIdArr[1] ;
-        return playerNameAndId.toLowerCase() ;
+        careers.add((String) playerStats.get(playerStats.size() - 1));
     }
-//    public boolean UpDateDatabase(List CSV){
-//      Connection connection = ConnectToDataBase() ;
-//        try (Connection connection = DriverManager.getConnection(databaseUrl);
-//             Statement statement = connection.createStatement()) {
-//
-//            // Create the table if it doesn't exist
-//            statement.execute("CREATE TABLE IF NOT EXISTS " + tableName + "(column1 TEXT, column2 TEXT, ...)");
-//
-//            // Import data from CSV
-//            String importCsvQuery = "INSERT INTO " + tableName + " SELECT * FROM CSVREAD('" + csvFilePath + "');";
-//            statement.execute(importCsvQuery);
-//
-//            System.out.println("CSV data imported successfully.");
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+
+    private void addDataToVector(List<?> teamStats, Vector<String> teams) {
+        for (Object line : teamStats) {
+            teams.add((String) line);
+        }
+    }
+
+
+    public void createTableFromCsv(String csvFilePath, String tableName) {
+        try (Connection connection = DriverManager.getConnection(DATABASE_PATH);
+             Statement statement = connection.createStatement()) {
+
+            // Read the first line of the CSV file to get column names
+            BufferedReader reader = new BufferedReader(new FileReader(csvFilePath));
+            String headerLine = reader.readLine();
+            reader.close();
+
+            // Split the header line into column names
+            String[] columnNames = headerLine.split(",");
+
+            // Build the CREATE TABLE SQL statement without specifying data types
+            statement.executeUpdate("DROP TABLE IF EXISTS" + tableName +";");
+            StringBuilder createTableSQL = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
+            createTableSQL.append(tableName).append(" (");
+
+            for (String columnName : columnNames) {
+                createTableSQL.append(columnName.trim()).append(", ");
+            }
+
+            // Remove the trailing comma and add closing parenthesis
+            createTableSQL.delete(createTableSQL.length() - 2, createTableSQL.length()).append(");");
+
+            // Execute the CREATE TABLE statement
+            statement.executeUpdate(createTableSQL.toString());
+
+            // Import data from CSV into the table
+            String importSQL = String.format("INSERT INTO %s SELECT * FROM csvREAD('%s');", tableName, csvFilePath);
+            statement.executeUpdate(importSQL);
+
+            System.out.println("Table created and CSV data imported successfully.");
+
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
+
+
 
 /**
  * Closes resources.
