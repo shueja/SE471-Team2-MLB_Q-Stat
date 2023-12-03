@@ -334,31 +334,31 @@ public class MlbAPI {
         return  teams;
     }
     public List fetchGameLogs(Stack Team) {
-    List stats = new ArrayList<>();
-    ChromeOptions option = new ChromeOptions();
-    option.addArguments("--headless");
-    option.addArguments("--disable-gpu");
-    WebDriver driver = new ChromeDriver(option) ;
-    while(!Team.isEmpty()) {
-        String player = (String) Team.pop();
-        try {
-            String playerUrl = String.format("https://www.mlb.com/player/%s?stats=gamelogs-r-hitting-mlb&year=2023", player);
-            String name = namePrep(player);
-            String webPage = fetchGameLog(playerUrl, driver) ;
-            stats.add(stat_prep_GameLogs(webPage, name));
-        } catch (Exception e) {
-            driver.quit();
-            option.addArguments("--headless");
-            option.addArguments("--disable-gpu");
-            driver = new ChromeDriver(option);
+        List stats = new ArrayList<>();
+        ChromeOptions option = new ChromeOptions();
+        option.addArguments("--headless");
+        option.addArguments("--disable-gpu");
+        WebDriver driver = new ChromeDriver(option) ;
+        while(!Team.isEmpty()) {
+            String player = (String) Team.pop();
+            try {
+                String playerUrl = String.format("https://www.mlb.com/player/%s?stats=gamelogs-r-hitting-mlb&year=2023", player);
+                String name = namePrep(player);
+                String webPage = fetchGameLog(playerUrl, driver) ;
+                stats.add(stat_prep_GameLogs(webPage, name));
+            } catch (Exception e) {
+                driver.quit();
+                option.addArguments("--headless");
+                option.addArguments("--disable-gpu");
+                driver = new ChromeDriver(option);
 
 
+            }
         }
-    }
 
-    driver.quit();
-    return stats;
-}
+        driver.quit();
+        return stats;
+    }
 
     public String fetchGameLog(String player_url,WebDriver driver){
         driver.get(player_url); // Send the url to the driver
@@ -423,20 +423,23 @@ public class MlbAPI {
         return htmlSource;
     }
 
-    public void fetchTeamStats(){
+    public List<String> fetchTeamStats(char flag){
         ChromeOptions option = new ChromeOptions();
         option.addArguments("--headless");
         option.addArguments("--disable-gpu");
         WebDriver driver = new ChromeDriver(option);
+        if(flag == 'h')
         driver.get("https://www.espn.com/mlb/stats/team");
+        else
+            driver.get("https://www.espn.com/mlb/stats/team/_/view/pitching");
         String page = driver.getPageSource();
-        stat_prep_Team_Stats(page);
-        driver.quit();
 
+        driver.quit();
+        return stat_prep_Team_Stats(page);
 
 
     }
-    public void stat_prep_Team_Stats(String input) {
+    public List<String> stat_prep_Team_Stats(String input) {
 
         // Insert the HTML returned by Selenium and parsed by Jsoup above...
         Document doc = Jsoup.parse(input, "UTF-8"); // Parse through the
@@ -467,33 +470,22 @@ public class MlbAPI {
                 continue;
             stats.add(stringRow); // Add to the stats array list
         }
+        List <String> teamNames = stats.subList(0,stats.size()/2);
+        List <String> teamStats = stats.subList(stats.size()/2, stats.size());
+        List <String> correctedNamesList = new ArrayList<String>();
+        List <String> correctedStatsList = new ArrayList<String>();
+        List <String> correctedList = new ArrayList<String>();
+        int count = 1 ;
+        for (String i:teamNames)
+            correctedNamesList.add(i.replaceAll("\\d", "") + "," + String.valueOf(count++)+ ",");
+        System.out.println(correctedNamesList);
+        for(String i:teamStats)
+            correctedStatsList.add(i.replace(",","").replaceAll(" ", ","));
+        correctedList.add(headerCsv);
+        for(int i = 0; i < teamNames.size();i++)
+            correctedList.add(correctedNamesList.get(i)+correctedStatsList.get(i));
 
-        // Get the team names:
-        int teamCount = 0;
-        // Go through the names in the table:
-        for (Element name : elements) {
-            String teamName = name.text();
-            // Ignore the strings that return the abbreviated team names:
-            if (teamName.length() == 0 || teamName.length() == 2 || teamName.length() == 3)
-                continue;
-
-            teamCount++; // Count for every team we get
-
-            if (teamCount <= 30) // If we haven't gone through all 30 MLB teams:
-                teams.add(teamName + ","); // Add the team name to the array list with a , at the end
-            else
-                break; // Exit the for loop once we get all the teams
-        }
-
-        teamCount = 0; // Reset team count to 0
-        // Go through the team stats in the array list:
-        for (String teamStats : stats) {
-            teamStats = teamStats.replace(' ', ',');
-            teamsCsv.add(teams.get(teamCount) + teamStats); // Add the completed team csv to the team csv array list
-            System.out.println(teamsCsv.get(teamCount));
-            teamCount++; // Update index counter
-        }
+            return correctedList;
     }
 
 }
-
