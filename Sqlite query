@@ -66,9 +66,10 @@ hitters:
 
 SELECT DISTINCT * FROM hitters
 WHERE Season >= 2023
-
+Order By ... Asc
 
 pitchers:
 
 SELECT DISTINCT * FROM pitchers
 WHERE Season >= 2023
+Order By ... Asc
