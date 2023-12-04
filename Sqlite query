@@ -61,3 +61,14 @@ OPS,
 GOAO
 FROM hittersCareer
 
+
+hitters:
+
+SELECT DISTINCT * FROM hitters
+WHERE Season >= 2023
+
+
+pitchers:
+
+SELECT DISTINCT * FROM pitchers
+WHERE Season >= 2023
