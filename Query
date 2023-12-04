@@ -1,0 +1,52 @@
+package org.example;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class dbQuery extends MlbDatabaseManager{
+   private Connection connection;
+   public dbQuery(){
+       this.connection = ConnectToDataBase() ;
+   }
+
+   public List QueryTeam(String team) throws SQLException {//team should be the two letter abreviation
+       try(Statement statement = connection.createStatement()){
+           List <?> resultA = new ArrayList<>() ;
+           List <?> resultB = new ArrayList<>() ;
+           List<Object> result = new ArrayList<>() ;
+           String query = String.format("SELECT * FROM HittersSeasonTable hst WHERE Team = \"%s\" AND Season = 2023;",team);
+           ResultSet resultSet = statement.executeQuery(query);
+           resultA= ToList(resultSet);
+           query = String.format("SELECT * FROM PitchersSeasonTable hst WHERE Team = \"%s\" AND Season = 2023;",team);
+           resultSet = statement.executeQuery(query);
+           resultB = ToList(resultSet);
+           for(Object i : resultA)
+               result.add(i);
+           for(Object i : resultB)
+               result.add(i);
+           for (Object i: result)
+               System.out.println(i);
+       }catch (SQLException e){
+           e.printStackTrace();
+       }
+
+       return null;
+   }
+   public List<?> ToList(ResultSet resultSet) throws SQLException {
+       List<String> result = new ArrayList<>();
+       String line = "";
+       ResultSetMetaData rsmd = resultSet.getMetaData();
+       for(int i = 1; i < rsmd.getColumnCount(); i++)
+           line += rsmd.getColumnName(i).replace("_"," ")+ ",";
+       result.add(line);
+       while(resultSet.next()) {
+           line = "";
+           for (int i = 1; i < rsmd.getColumnCount(); i++)
+               line += resultSet.getString(i).replace("_"," ")+",";
+           result.add(line);
+       }
+
+       return result;
+   }
+}
