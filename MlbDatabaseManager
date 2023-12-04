@@ -1,25 +1,30 @@
 package org.example;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
-import java.util.HashSet;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 
 /**
  * Manages the connection to the MLB database and updates player statistics.
  */
 public class MlbDatabaseManager {
-    // String static createTableScript = ;
     private static final String DATABASE_PATH = "jdbc:sqlite:MLBdatabase.db";
 
+
+    // Add mappings
+
+
+        public MlbDatabaseManager(){
+
+        }
     //private Connection connection; // Connection for the database
 
 
@@ -27,7 +32,7 @@ public class MlbDatabaseManager {
      * Constructs an instance of MlbDatabaseManager, establishes a connection to the database,
      * and initializes the web scraping API.
      */
-    private Connection ConnectToDataBase() {
+    protected Connection ConnectToDataBase() {
         Connection connection = null;
         try {
             // Load the SQLite JDBC driver
@@ -48,12 +53,13 @@ public class MlbDatabaseManager {
 
     public void makeCSV() {
         MlbAPI scraper = new MlbAPI();
-        boolean getPlayerStats = false; //temporarily set to false
-        if (getPlayerStats) {
+        boolean getSeasonStats = false, getGameLogs = false,getTeamStats = true; //temporarily set to false
+        int pitcherFlag = 0, hitterFlag = 0;
+        if (getSeasonStats) {
 
-            int pitcherFlag = 0, hitterFlag = 0;
-            Vector<String> pitchersSeason = new Vector<>(), hittersSeason = new Vector<>(), pitchersCareer = new Vector<>(), hittersCareer = new Vector<>(),
-                    pitchersGameLogs = new Vector<>(), hittersGameLogs = new Vector<>();
+
+            Vector<String> pitchersSeason = new Vector<>(), hittersSeason = new Vector<>(), pitchersCareer = new Vector<>(), hittersCareer = new Vector<>();
+
             List<String> hitterLogs = new ArrayList();
             List<String> pitcherLogs = new ArrayList<>();
             ;
@@ -70,10 +76,10 @@ public class MlbDatabaseManager {
                         checkString = (String) playerStats.get(0);
 
                         if (checkString.contains("AB")) {
-                            addDataToVector(playerStats, hittersSeason, hittersCareer, hitterFlag);
+                            addDataToVectorSeasons(playerStats, hittersSeason, hittersCareer, hitterFlag);
                             hitterFlag = 1;
                         } else {
-                            addDataToVector(playerStats, pitchersSeason, pitchersCareer, pitcherFlag);
+                            addDataToVectorSeasons(playerStats, pitchersSeason, pitchersCareer, pitcherFlag);
                             pitcherFlag = 1;
                         }
                     }
@@ -85,22 +91,14 @@ public class MlbDatabaseManager {
                 writeDataToFile("pitchersCareer.csv", pitchersCareer);
             }
 
-//            hitterFlag = 0;
-//            pitcherFlag = 0;
-//            for (Object player : (List) hitting) {
-//                List<?> playerStats = (List<?>) player;
-//                addDataToVector(playerStats, hittersGameLogs, hittersCareer, hitterFlag);
-//                hitterFlag = 1;
-//            }
-//            for (Object player : (List) pitching) {
-//                List<?> playerStats = (List<?>) player;
-//                addDataToVector(playerStats, pitchersGameLogs, hittersCareer, pitcherFlag);
-//                pitcherFlag = 1;
-//            }
-            teams = scraper.updateGameLogs();
-            for (Object team : teams) {
-                String playerName = "";
 
+        }
+        if (getGameLogs) {
+            Vector<String> pitchersGameLogs = new Vector<>(), hittersGameLogs = new Vector<>();
+            List gameLogs = scraper.updateGameLogs();
+            hitterFlag = 0;
+            pitcherFlag = 0;//set the flags to zero
+            for (Object team : gameLogs) {
 
                 for (Object player : (List) team) {
                     List<?> playerStats = (List<?>) player;
@@ -110,10 +108,10 @@ public class MlbDatabaseManager {
                         checkString = (String) playerStats.get(0);
 
                         if (checkString.contains("AB")) {
-                            addDataToVector(playerStats, hittersGameLogs, hittersCareer, hitterFlag);
+                            addDataToVectorGameLogs(playerStats, hittersGameLogs, hitterFlag);
                             hitterFlag = 1;
                         } else {
-                            addDataToVector(playerStats, pitchersGameLogs, pitchersCareer, pitcherFlag);
+                            addDataToVectorGameLogs(playerStats, pitchersGameLogs, pitcherFlag);
                             pitcherFlag = 1;
                         }
                     }
@@ -122,14 +120,16 @@ public class MlbDatabaseManager {
                 writeDataToFile("hittingGameLogs.csv", hittersGameLogs);
                 writeDataToFile("pitchingGameLogs.csv", pitchersGameLogs);
             }
-
         }
-        Vector<String> teamStats = new Vector<>();
-        addDataToVector(scraper.fetchTeamStats('h'), teamStats, 1);
-        writeDataToFile("leagueHittingStats.csv", teamStats);
-        teamStats.clear();
-        addDataToVector(scraper.fetchTeamStats('p'), teamStats, 1);
-        writeDataToFile("leaguePitchingStats.csv", teamStats);
+
+        if(getTeamStats) {
+            Vector<String> teamStats = new Vector<>();
+            addDataToVectorGameLogs(scraper.fetchTeamStats('h'), teamStats, 0);
+            writeDataToFile("teamHitting.csv", teamStats);
+            teamStats.clear();
+            addDataToVectorGameLogs(scraper.fetchTeamStats('p'), teamStats, 0);
+            writeDataToFile("teamPitching.csv", teamStats);
+        }
 
 
     }
@@ -159,62 +159,124 @@ public class MlbDatabaseManager {
      * @param careers     The vector to which the career stat line data should be added.
      * @param flag        The flag indicating the current state.
      */
-    private void addDataToVector(List<?> playerStats, Vector<String> seasons, Vector<String> careers, int flag) {
+    private String addDataToVectorSeasons(List<?> playerStats, Vector<String> seasons, Vector<String> careers, int flag) {
         for (Object line : playerStats.subList(flag, playerStats.size() - 1)) {
             seasons.add((String) line);
         }
         if (flag == 0)
             careers.add((String) playerStats.get(0));
         careers.add((String) playerStats.get(playerStats.size() - 1));
+        String playerNameAndId = (String) playerStats.get(1);
+        String playerNameAndIdArr[] = playerNameAndId.split(",");
+        playerNameAndId = playerNameAndIdArr[0] + "," + playerNameAndIdArr[1];
+        return playerNameAndId.toLowerCase();
     }
 
-    private void addDataToVector(List<?> teamStats, Vector<String> teams) {
-        for (Object line : teamStats) {
-            teams.add((String) line);
+    private void addDataToVectorGameLogs(List<?> playerStats, Vector<String> seasons, int flag) {
+        for (Object line : playerStats.subList(flag, playerStats.size())) {
+            seasons.add((String) line);
         }
     }
 
+    private boolean UpdateTables(String csvFilePath, String tableName) throws SQLException {
+        List<String> data = new ArrayList<>();
 
-    public void createTableFromCsv(String csvFilePath, String tableName) {
-        try (Connection connection = DriverManager.getConnection(DATABASE_PATH);
-             Statement statement = connection.createStatement()) {
-
-            // Read the first line of the CSV file to get column names
-            BufferedReader reader = new BufferedReader(new FileReader(csvFilePath));
-            String headerLine = reader.readLine();
-            reader.close();
-
-            // Split the header line into column names
-            String[] columnNames = headerLine.split(",");
-
-            // Build the CREATE TABLE SQL statement without specifying data types
-            statement.executeUpdate("DROP TABLE IF EXISTS" + tableName +";");
-            StringBuilder createTableSQL = new StringBuilder("CREATE TABLE IF NOT EXISTS ");
-            createTableSQL.append(tableName).append(" (");
-
-            for (String columnName : columnNames) {
-                createTableSQL.append(columnName.trim()).append(", ");
+        try (BufferedReader br = new BufferedReader(new FileReader(csvFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                data.add(line);
             }
-
-            // Remove the trailing comma and add closing parenthesis
-            createTableSQL.delete(createTableSQL.length() - 2, createTableSQL.length()).append(");");
-
-            // Execute the CREATE TABLE statement
-            statement.executeUpdate(createTableSQL.toString());
-
-            // Import data from CSV into the table
-            String importSQL = String.format("INSERT INTO %s SELECT * FROM csvREAD('%s');", tableName, csvFilePath);
-            statement.executeUpdate(importSQL);
-
-            System.out.println("Table created and CSV data imported successfully.");
-
-        } catch (SQLException | IOException e) {
+            br.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
+
+        Connection connection = ConnectToDataBase();
+        try (Statement statement = connection.createStatement()) {
+            String tableHeaderArr[] = data.get(0).replace(" ", "_").replace("/", "").split(",");
+            String formater[] = data.get(1).replace(" ", "_").replace("/", "").split(",");
+            String tableHeader = "", insertHeader = data.get(0).replace(" ", "_").replace("/", "").replace("2B","Doubles").replace("3B","Triples").replace("-","").replace("/","");
+            for (int i = 0; i < tableHeaderArr.length; i++) {
+                if(tableHeaderArr[i].contains("2B"))
+                    tableHeaderArr[i] = "Doubles ";
+                if(tableHeaderArr[i].contains("3B"))
+                    tableHeaderArr[i] = "Triples ";
+
+                tableHeaderArr[i]+=FindType(formater[i]);
+
+
+                if(tableHeaderArr[i].contains("Player_ID")||tableHeaderArr[i].contains("TEAM"))
+                    tableHeaderArr[i]+="PRIMARY KEY";
+                tableHeaderArr[i]+=",\n";
+                tableHeader+=tableHeaderArr[i];
+
+            }
+            tableHeader = tableHeader.substring(0,tableHeader.length()-2);
+            String deleteTable = "DROP TABLE IF EXISTS " + tableName + ";";
+            statement.executeUpdate(deleteTable);
+            String createTableSQL = String.format("CREATE TABLE IF NOT EXISTS %s (%s) ;", tableName, tableHeader);
+            statement.executeUpdate(createTableSQL);
+            data.remove(0);
+            String line = "";
+            while(!data.isEmpty()) {
+                line = data.get(0);
+                String statLine[] = line.replace(" ", "_").replace("-","&").replace("/","_").split(",");
+                String insertStatement = String.format("INSERT INTO %s (%s) VALUES (", tableName, insertHeader);
+                String stat = "";
+                for (int i = 0; i < statLine.length; i++) {
+                    stat = statLine[i];
+                    if (stat.length() != 0) {
+                        if (!stat.contains("-"))
+                            insertStatement += String.format("'%s',", statLine[i]);
+                        else
+                            insertStatement += "NULL,";
+                    }
+                }
+                insertStatement = insertStatement.substring(0,insertStatement.length()-1) + ");";
+                System.out.println(insertStatement);
+                statement.executeUpdate(insertStatement);
+                data.remove(0);
+            }
+
+            String distinctify = String.format("CREATE TEMPORARY TABLE TEMP AS\n" +
+                    "SELECT DISTINCT * FROM %s ;\n", tableName);
+            distinctify += String.format("DELETE FROM %s;\n", tableName);
+            distinctify += String.format("INSERT INTO %s SELECT * FROM TEMP;\n", tableName);
+            distinctify += "DROP TABLE TEMP;";
+            statement.executeLargeUpdate(distinctify);
+            connection.close();
+        } catch (SQLException s) {
+            s.printStackTrace();
+        }
+        return true;
+    }
+
+    private String FindType(String input) {
+        try {
+            // Try parsing as float
+            int intValue = Integer.parseInt(input);
+            return " INTEGER";
+        } catch (NumberFormatException eFloat) {
+            try {
+                // If parsing as float fails, try parsing as int
+                float intValue = Float.parseFloat(input);
+                return " REAL";
+            } catch (NumberFormatException eInt) {
+                return " TEXT";
+            }
+        }
+    }
+    public void UpdateDatabase() throws SQLException {
+        UpdateTables("hittersSeason.csv", "HittersSeasonTable");
+        UpdateTables("hittersCareer.csv", "HittersCareerTable");
+        UpdateTables("pitchersSeason.csv", "PitchersSeasonTable");
+        UpdateTables("pitchersCareer.csv", "PitchersCareerTable");
+        UpdateTables("hittingGameLogs.csv", "HittingLogTable");
+        UpdateTables("pitchingGameLogs.csv", "PitchingLogTable");
+        UpdateTables("teamPitching.csv", "TeamPitchingTable");
+        UpdateTables("teamHitting.csv", "TeamHittingTable");
     }
 }
-
-
 
 /**
  * Closes resources.
