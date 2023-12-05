@@ -5,48 +5,145 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class dbQuery extends MlbDatabaseManager{
-   private Connection connection;
-   public dbQuery(){
-       this.connection = ConnectToDataBase() ;
-   }
+    private Connection connection;
+    public dbQuery(){
+        this.connection = ConnectToDataBase() ;
+    }
 
-   public List QueryTeam(String team) throws SQLException {//team should be the two letter abreviation
-       try(Statement statement = connection.createStatement()){
-           List <?> resultA = new ArrayList<>() ;
-           List <?> resultB = new ArrayList<>() ;
-           List<Object> result = new ArrayList<>() ;
-           String query = String.format("SELECT * FROM HittersSeasonTable hst WHERE Team = \"%s\" AND Season = 2023;",team);
-           ResultSet resultSet = statement.executeQuery(query);
-           resultA= ToList(resultSet);
-           query = String.format("SELECT * FROM PitchersSeasonTable hst WHERE Team = \"%s\" AND Season = 2023;",team);
-           resultSet = statement.executeQuery(query);
-           resultB = ToList(resultSet);
-           for(Object i : resultA)
-               result.add(i);
-           for(Object i : resultB)
-               result.add(i);
-           for (Object i: result)
-               System.out.println(i);
-       }catch (SQLException e){
-           e.printStackTrace();
-       }
+    public void QueryTeam(String team) throws SQLException {//team should be the two letter abreviation
+        try(Statement statement = connection.createStatement()){
+            List <?> resultA = new ArrayList<>() ;
+            List <?> resultB = new ArrayList<>() ;
+            List<Object> result = new ArrayList<>() ;
+            String query = String.format("SELECT * FROM HittersSeasonTable hst WHERE Team = \"%s\" AND Season = 2023;",team);
+            ResultSet resultSet = statement.executeQuery(query);
+            resultA= ToList(resultSet);
+            query = String.format("SELECT * FROM PitchersSeasonTable hst WHERE Team = \"%s\" AND Season = 2023;",team);
+            resultSet = statement.executeQuery(query);
+            resultB = ToList(resultSet);
+            for(Object i : resultA)
+                result.add(i);
+            for(Object i : resultB)
+                result.add(i);
+            for (Object i: result)
+                System.out.println(i);
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
 
-       return null;
-   }
-   public List<?> ToList(ResultSet resultSet) throws SQLException {
-       List<String> result = new ArrayList<>();
-       String line = "";
-       ResultSetMetaData rsmd = resultSet.getMetaData();
-       for(int i = 1; i < rsmd.getColumnCount(); i++)
-           line += rsmd.getColumnName(i).replace("_"," ")+ ",";
-       result.add(line);
-       while(resultSet.next()) {
-           line = "";
-           for (int i = 1; i < rsmd.getColumnCount(); i++)
-               line += resultSet.getString(i).replace("_"," ")+",";
-           result.add(line);
-       }
+    }
 
-       return result;
-   }
+    public List ComparePitcher(String playerId) throws SQLException {//team should be the two letter abreviation
+        try(Statement statement = connection.createStatement()){
+            List<?> result = new ArrayList<>() ;
+            String query = String.format("-- Drop the temporary table if it exists\n" +
+                    "DROP TABLE IF EXISTS TempResult;\n" +
+                    "\n" +
+                    "-- Create a temporary table and populate it with the results of the query\n" +
+                    "CREATE TEMPORARY TABLE TempResult AS\n" +
+                    "SELECT pst.*\n" +
+                    "FROM PitchersSeasonTable pst\n" +
+                    "JOIN PitchersSeasonTable pst_max\n" +
+                    "  ON pst.Season = pst_max.Season\n" +
+                    "     AND pst.Player_ID != '%s'\n" +
+                    "     AND pst_max.Season = 2023\n" +
+                    "WHERE pst.Season = 2023\n" +
+                    "ORDER BY\n" +
+                    "  SQRT(\n" +
+                    "    POWER(pst.ERA - pst_max.ERA, 2) +\n" +
+                    "    POWER(pst.IP - pst_max.IP, 2) +\n" +
+                    "    POWER(pst.GS - pst_max.GS, 2) +\n" +
+                    "    POWER(pst.W - pst_max.W, 2) +\n" +
+                    "    POWER(pst.L - pst_max.L, 2) +\n" +
+                    "    POWER(pst.BB - pst_max.BB, 2) +\n" +
+                    "    POWER(pst.SO - pst_max.SO, 2) +\n" +
+                    "    POWER(pst.WHIP - pst_max.WHIP, 2)\n" +
+                    "  ) ASC\n" +
+                    "LIMIT 2;\n" +
+                    "\n" +
+                    "-- Insert the row for given player into the temporary table\n" +
+                    "INSERT INTO TempResult\n" +
+                    "SELECT pst.*\n" +
+                    "FROM PitchersSeasonTable pst\n" +
+                    "WHERE Player_ID = '%s' AND Season = 2023;\n",playerId,playerId);
+            statement.executeUpdate(query);
+
+                   query = String.format( "-- Select all rows from the temporary table and order them\n" +
+                    "SELECT *\n" +
+                    "FROM TempResult;\n",playerId,playerId);
+            ResultSet resultSet = statement.executeQuery(query);
+             result = ToList(resultSet);
+            for (Object i: result)
+                System.out.println(i);
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+    public List CompareHitter(String playerId) throws SQLException {//team should be the two letter abreviation
+        try(Statement statement = connection.createStatement()){
+            List<?> result = new ArrayList<>() ;
+            String query = String.format("-- Drop the temporary table if it exists\n" +
+                    "DROP TABLE IF EXISTS TempResult;\n" +
+                    "\n" +
+                    "-- Create a temporary table and populate it with the results of the query\n" +
+                    "CREATE TEMPORARY TABLE TempResult AS\n" +
+                    "SELECT pst.*\n" +
+                    "FROM HittersSeasonTable hst\n" +
+                    "JOIN HittersSeasonTable hst_max\n" +
+                    "  ON hst.Season = hst_max.Season\n" +
+                    "     AND hst.Player_ID != '%s'\n" +
+                    "     AND hst_max.Season = 2023\n" +
+                    "WHERE hst.Season = 2023\n" +
+                    "ORDER BY\n" +
+                    "  SQRT(\n" +
+                    "    POWER(hst.ERA - hst_max.ERA, 2) +\n" +
+                    "    POWER(hst.IP - hst_max.IP, 2) +\n" +
+                    "    POWER(hst.GS - hst_max.GS, 2) +\n" +
+                    "    POWER(hst.W - hst_max.W, 2) +\n" +
+                    "    POWER(hst.L - hst_max.L, 2) +\n" +
+                    "    POWER(hst.BB - hst_max.BB, 2) +\n" +
+                    "    POWER(hst.SO - hst_max.SO, 2) +\n" +
+                    "    POWER(hst.WHIP - hst_max.WHIP, 2)\n" +
+                    "  ) ASC\n" +
+                    "LIMIT 2;\n" +
+                    "\n" +
+                    "-- Insert the row for given player into the temporary table\n" +
+                    "INSERT INTO TempResult\n" +
+                    "SELECT pst.*\n" +
+                    "FROM HittersSeasonTable pst\n" +
+                    "WHERE Player_ID = '%s' AND Season = 2023;\n",playerId,playerId);
+            statement.executeUpdate(query);
+
+            query = String.format( "-- Select all rows from the temporary table and order them\n" +
+                    "SELECT *\n" +
+                    "FROM TempResult;\n",playerId,playerId);
+            ResultSet resultSet = statement.executeQuery(query);
+            result = ToList(resultSet);
+            for (Object i: result)
+                System.out.println(i);
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public List<?> ToList(ResultSet resultSet) throws SQLException {
+        List<String> result = new ArrayList<>();
+        String line = "";
+        ResultSetMetaData rsmd = resultSet.getMetaData();
+        for(int i = 1; i < rsmd.getColumnCount(); i++)
+            line += rsmd.getColumnName(i).replace("_"," ")+ ",";
+        result.add(line);
+        while(resultSet.next()) {
+            line = "";
+            for (int i = 1; i < rsmd.getColumnCount(); i++)
+                line += resultSet.getString(i).replace("_"," ")+",";
+            result.add(line);
+        }
+
+        return result;
+    }
 }
