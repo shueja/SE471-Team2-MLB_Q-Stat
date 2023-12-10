@@ -5,6 +5,11 @@ It contains all the necessary configuration and some placeholder files to get yo
 
 ## Running the application
 
+> IMPORTANT! If downloading/cloning the project off Github, extract the 
+> ZIP file `mlb-q-stat/DATABASE_EXTRACT_ME_HERE.zip` and place the contained file as 
+> `mlb-q-stat/MLBdatabase.db`. The uncompressed database is necessary for the app to run
+> but is too large for GitHub.
+
 The project is a standard Maven project. To run it from the command line,
 type `mvnw` (Windows), or `./mvnw` (Mac & Linux), then open
 http://localhost:8080 in your browser.
