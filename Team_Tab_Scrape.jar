@@ -1,0 +1,61 @@
+package org.example;
+
+
+
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.util.Vector;
+import java.lang.Runnable;
+
+public class MLB_Scraper {
+    public static String[] teamNames = new String[]{"White Sox", "Cubs", "Guardians", "Reds", "Tigers", "Brewers", "Royals", "Pirates", "Twins", "Cardinals", "Orioles", "Braves", "Red Sox", "Marlins", "Yankees", "Mets", "Rays", "Phillies", "bluejays", "Nationals", "Astros", "dbacks", "Angels", "Rockies", "Athletics", "Dodgers", "Mariners", "Padres", "rangers", "Giants"};
+
+
+    public MLB_Scraper(){}
+    public static Vector<String> fetch_roster(String team){
+
+        Vector <String> roster = new Vector() ;
+        try {
+            String urlName = String.format("https://www.mlb.com/%s/roster", team);
+            Document doc = Jsoup.connect(urlName).get();
+            Elements link = doc.select("td.info > a");
+
+
+            for(Element el:link)
+                roster.add(el.attr("href")) ;
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
+        //Elements values = doc.select("td") ;
+
+        return roster ;
+    }
+
+// This method will retrieve the names of the teams in lower case and containing no spaces. 
+ public Vector<Vector<String>> fetch_rosters() {
+     Vector<Vector<String>> rosters = new Vector();
+     for (int i = 0; i < teamNames.length; i++) {
+         teamNames[i] = teamNames[i].toLowerCase().replaceAll(" ", ""); // Change the string from normal format to no capitals and spaces 
+     }
+     System.out.print("Working... ");
+     // Loading (fetching and parsing the HTML)
+     for (String team : teamNames) {
+         System.out.print(team + " ");
+         rosters.add(fetch_roster(team));
+     }
+    // This for loop will print out the string objects (team names) one by one: 
+     for (Vector roster : rosters) {
+         for (Object element : roster)
+             System.out.println(element);
+     }
+     return rosters ;
+ }
+
+
+}

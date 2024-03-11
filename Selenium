@@ -1,0 +1,30 @@
+package Selenium;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+
+public class Main {
+    @SuppressWarnings("deprecation")
+	public static void main(String[] args) {
+        long startTime = System.currentTimeMillis();
+        System.setProperty("webdriver.chrome.driver", "C:\\Users\\asian\\Downloads\\chromedriver_win32\\chromedriver.exe");
+
+        try {
+            
+            String url = "https://www.mlb.com/player/shohei-ohtani-660271";
+            ChromeOptions opt = new ChromeOptions();
+            opt.setBinary("C:\\Users\\asian\\Downloads\\114\\chrome-win64\\chrome.exe");
+            WebDriver driver = new ChromeDriver(opt);
+            driver.get(url);
+            String htmlSource = driver.getPageSource();
+            
+            System.out.println(htmlSource);
+            driver.close();
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        long endTime = System.currentTimeMillis();
+        long totalTime = endTime - startTime;
+        System.out.print(totalTime);
+    }
+}

@@ -1,0 +1,31 @@
+// Insert this into the code AFTER you get the gamelogs page AND HTML:
+          // Get the game logs header:
+            Elements gameLogsTable = doc.select("#gamelogsTable .responsive-datatable__pinned");
+            Elements gamelogHeading = new Elements();
+            gamelogHeading = gameLogsTable.select("thead th");
+            String headingCsv = ""; // Initialize the header CSV
+            for(var th: gamelogHeading) 
+    			headingCsv += th.text() + ",";
+            
+            // Ignore the "sort" at the end of the header string + remove trailing ,:
+            headingCsv = headingCsv.substring(0, headingCsv.length()-6);
+            System.out.println(headingCsv); 
+          
+            /* Get the game logs rows:
+             * 
+             * If you want the month total in the game logs, remove the :not(.total) from the select statement.
+             * If you want the repeat headers in the game logs, remove the :not(.header-repeat) from the select statement.
+             * 			! - Selecting the headers inside the table will return a "sort" element at the end of the string.
+             *	
+             */
+            Elements gamelogTr = gameLogsTable.select("tbody tr:not(.header-repeat):not(.total)");
+        
+            // Get every tr element in the gamelogTr elements:
+            for(var tr: gamelogTr) {
+            	Elements gamelogTds = tr.select("td"); // Select the td elements
+            	String rowCsv = "";
+            	for(var td: gamelogTds) // Get every td element in the gamelogsTds elements:
+            		rowCsv += td.text() + ",";
+            	rowCsv =  rowCsv.substring(0, rowCsv.length()-3); // Get rid of the extra parts from the string
+            	System.out.println(rowCsv);
+            

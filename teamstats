@@ -1,0 +1,54 @@
+    		// Insert the HTML returned by Selenium and parsed by Jsoup above...
+    		
+    		// Initialize array lists:
+    		ArrayList<String> teamsCsv = new ArrayList<String>(); // CSVs
+    		ArrayList<String> stats = new ArrayList<String>();    // Team stats separated by commas
+    		ArrayList<String> teams = new ArrayList<String>();    // Team names with a comma at the end
+    		
+    		// Select the entire table:
+            Elements teamsTable = doc.select("div.flex");
+            Elements elements = teamsTable.select("a.AnchorLink"); // Select the column with the team names
+            
+            // Get the header csv:
+            Elements teamsHeader = doc.select("thead"); 
+            String headerCsv = "TEAM," + teamsHeader.text(); // Team is manually input since there doesn't exist a thead w/ "TEAM" 
+            headerCsv = headerCsv.replace(' ', ','); // Replace the spaces returned by Selenium with ,'s
+            System.out.println(headerCsv);
+            
+            // Get the stats:
+            Elements ele = doc.select("tbody.Table__TBODY"); // Select the body of the team stats table
+            Elements ele2 = ele.select("tr"); // Select the tr elements of the body
+            // Go through the rows in the table:
+            for(Element row: ele2) { 
+            	String stringRow = row.text(); 
+            	// Ignore the strings that return the un-necessary information:
+            	if(stringRow.charAt(0) == 'e' || stringRow.charAt(0) == 'z' || stringRow.charAt(0) == 'x' || stringRow.charAt(0) == '*')
+            		continue;
+            	stats.add(stringRow); // Add to the stats array list
+            }
+            
+            // Get the team names:
+            int teamCount = 0; 
+            // Go through the names in the table:
+            for(Element name:elements) { 
+            	String teamName = name.text(); 
+            	// Ignore the strings that return the abbreviated team names:
+            	if(teamName.length() == 0 || teamName.length() == 2 || teamName.length() == 3)
+            		continue;
+
+            	teamCount+=1; // Count for every team we get
+            	
+            	if(teamCount <= 30) // If we haven't gone through all 30 MLB teams:
+            		teams.add(teamName + ","); // Add the team name to the array list with a , at the end
+            	else
+            		break; // Exit the for loop once we get all the teams
+            }
+            
+            teamCount = 0; // Reset team count to 0
+            // Go through the team stats in the array list:
+            for(String teamStats: stats) { 
+            	teamStats = teamStats.replace(' ',',');
+            	teamsCsv.add(teams.get(teamCount) + teamStats); // Add the completed team csv to the team csv array list
+            	System.out.println(teamsCsv.get(teamCount));
+            	teamCount+=1; // Update index counter
+            }

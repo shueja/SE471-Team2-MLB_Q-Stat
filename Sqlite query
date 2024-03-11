@@ -1,0 +1,75 @@
+PitchersCareer:
+
+SELECT DISTINCT
+PlayerName,
+PlayerID,
+Season,
+Team,
+LG,
+W,
+L,
+ERA,
+G,
+GS,
+CG,
+SHO,
+HLD,
+SV,
+SVO,
+IP,
+H,
+R,
+ER,
+HR,
+NP,
+HB,
+BB,
+IBB,
+SO,
+WHIP,
+AVG,
+GO/AO
+FROM pitchersCareer
+
+
+HittersCareer:
+
+SELECT DISTINCT
+PLayerName,
+PlayerID,
+Season,
+Team, 
+LG,
+G,
+AB, 
+R,
+H,
+TB,
+"2B",
+"3B",
+HR,
+RBI,
+BB,
+IBB,
+SO,
+SB,
+CS,
+AVG,
+OBP,
+SLG,
+OPS,
+GOAO
+FROM hittersCareer
+
+
+hitters:
+
+SELECT DISTINCT * FROM hitters
+WHERE Season >= 2023
+Order By ... Asc
+
+pitchers:
+
+SELECT DISTINCT * FROM pitchers
+WHERE Season >= 2023
+Order By ... Asc
