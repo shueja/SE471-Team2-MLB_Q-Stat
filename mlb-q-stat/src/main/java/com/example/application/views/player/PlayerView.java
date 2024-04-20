@@ -1,10 +1,11 @@
 package com.example.application.views.player;
 
 import com.example.application.data.PlayerService;
+import com.example.application.data.enums.HitterStat;
+import com.example.application.data.enums.PitcherStat;
 import com.example.application.views.MainLayout;
 import com.example.application.views.graph.Graph;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.Svg;
 import com.vaadin.flow.component.dependency.Uses;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Anchor;
@@ -16,7 +17,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.*;
 
-import java.util.Set;
 import java.util.function.BiConsumer;
 
 
@@ -35,14 +35,14 @@ public class PlayerView extends Div implements HasUrlParameter<Integer> {
 
     }
 
-    private Component createHitterList(BiConsumer<PlayerService.HS, Integer> updateGraph) {
+    private Component createHitterList(BiConsumer<HitterStat, Integer> updateGraph) {
 
         var playerOpt = playerService.getHitter(playerId);
         if (playerOpt.isPresent()) {
             var player = playerOpt.get();
             FormLayout form = new FormLayout();
-            for (PlayerService.HS stat : PlayerService.HS.values()) {
-                var title = new Span(String.valueOf(stat.playerFunction.apply(player)));
+            for (HitterStat stat : HitterStat.values()) {
+                var title = new Span(String.valueOf(stat.accessor.apply(player)));
                 form.addFormItem(title, stat.humanName).addClickListener(
                         (spanClickEvent -> updateGraph.accept(stat, playerId)));
             }
@@ -52,14 +52,14 @@ public class PlayerView extends Div implements HasUrlParameter<Integer> {
         return new Span();
     }
 
-    private Component createPitcherList(BiConsumer<PlayerService.PS, Integer> updateGraph) {
+    private Component createPitcherList(BiConsumer<PitcherStat, Integer> updateGraph) {
 
         var playerOpt = playerService.getPitcher(playerId);
         if (playerOpt.isPresent()) {
             var player = playerOpt.get();
             FormLayout form = new FormLayout();
-            for (PlayerService.PS stat : PlayerService.PS.values()) {
-                var title = new Span(String.valueOf(stat.playerFunction.apply(player)));
+            for (PitcherStat stat : PitcherStat.values()) {
+                var title = new Span(String.valueOf(stat.accessor.apply(player)));
                 form.addFormItem(title, stat.humanName).addClickListener(
                         (spanClickEvent -> updateGraph.accept(stat, playerId)));
             }
@@ -92,14 +92,14 @@ public class PlayerView extends Div implements HasUrlParameter<Integer> {
                 setTitle(player.name());
                 setText("");
                 layout.add(new H1(player.name()));
-                graph.setPoints(playerService.getPlayerHistory(player.id(), PlayerService.HS.battingAvg));
+                graph.setPoints(playerService.getPlayerHistory(player.id(), HitterStat.battingAvg));
             }
             else {
                 var player = pitcherOpt.get();
                 setTitle(player.name());
                 setText("");
                 layout.add(new H1(player.name()));
-                graph.setPoints(playerService.getPlayerHistory(player.id(), PlayerService.PS.battingAvg));
+                graph.setPoints(playerService.getPlayerHistory(player.id(), PitcherStat.battingAvg));
             }
 
             //layout.setSizeFull();
@@ -128,7 +128,7 @@ public class PlayerView extends Div implements HasUrlParameter<Integer> {
             }
 
             layout.add(createHitterList(
-                    (PlayerService.HS stat, Integer id)->{
+                    (HitterStat stat, Integer id)->{
                         graph.setPoints(playerService.getPlayerHistory(id, stat));
                         graphLabel.setText("Graph Shows: " + stat.humanName);
 
@@ -154,7 +154,7 @@ public class PlayerView extends Div implements HasUrlParameter<Integer> {
 
             }
             layout.add(createPitcherList(
-                    (PlayerService.PS stat, Integer id)->{
+                    (PitcherStat stat, Integer id)->{
                         graph.setPoints(playerService.getPlayerHistory(id, stat));
                         graphLabel.setText("Graph Shows: " + stat.humanName);
 

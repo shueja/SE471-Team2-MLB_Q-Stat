@@ -2,6 +2,9 @@ package com.example.application.data;
 
 import com.example.application.data.entity.Hitter;
 import com.example.application.data.entity.Pitcher;
+import com.example.application.data.enums.HitterStat;
+import com.example.application.data.enums.PitcherStat;
+import com.vaadin.flow.function.ValueProvider;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
@@ -11,78 +14,9 @@ import java.util.*;
 public class PlayerService {
     private static final String DATABASE_PATH = "jdbc:sqlite:MLBdatabase.db";
     private final Connection connection;
-    public static enum HS {
-        league("Team", "T", Hitter::team),
-        gamesPlayed("Games Played", "G", Hitter::gamesPlayed),
-        atBats("At Bats", "AB", Hitter::atBats),
-        runs("Runs","R", Hitter::runs),
-        hits("Hits", "H", Hitter::hits),
-        totalBases("Total Bases", "TB", Hitter::totalBases),
-        doubles("Doubles", "Doubles", Hitter::doubles),
-        triples("Triples", "Triples", Hitter::triples),
-        homeRuns("Home Runs", "HR", Hitter::homeRuns),
-        runsBattedIn("Runs Batted In", "RBI", Hitter::rbis),
-        walks("Base on Balls", "BB", Hitter::walks),
-        intentionalWalks("Intentional Walks", "IBB", Hitter::intentionalWalks),
-        strikeouts("Strikeouts", "SO", Hitter::strikeOuts),
-        stolenBases("Stolen Bases", "SB", Hitter::stolenBases),
-        caughtStealing("Caught Stealing", "CS", Hitter::caughtStealing),
-        battingAvg("Batting Average", "AVG", Hitter::average),
-        onBasePercentage("On-base percentage", "OBP", Hitter::obp),
-        sluggingPercentage("Slugging percentage", "SLG", Hitter::slg),
-        onBasePlusSlugging("On-base + slugging percentage", "OPS", Hitter::ops),
-        groundoutAirout("Groundout/Airout Ratio", "GOAO", Hitter::groundoutFlyout);
 
+    
 
-
-        public final String humanName;
-        public final String db;
-
-        public final  com.vaadin.flow.function.ValueProvider<Hitter, String> playerFunction;
-        private HS(String humanName, String db, com.vaadin.flow.function.ValueProvider<Hitter, String> playerFunction) {
-            this.humanName = humanName;
-            this.db = db;
-            this.playerFunction = playerFunction;
-        }
-
-    }
-
-    public static enum PS {
-        league("Team", "Team", Pitcher::team),
-        gamesPlayed("Games Played", "G", Pitcher::gamesPlayed),
-        era("ERA", "ERA", Pitcher::era),
-        gamesStarted("Games Started", "GS", Pitcher::gamesStarted),
-        completeGames("Complete Games", "CG", Pitcher::completeGames),
-        shutouts("Shutouts", "SHO", Pitcher::shutouts),
-        holds("Holds", "HLD", Pitcher::holds),
-        saves("Saves", "SV", Pitcher::saves),
-        saveOpportunities("Save Opportunities", "SVO", Pitcher::saveOpps),
-        inningsPitched("Innings Pitched", "IP", Pitcher::inningsPitched),
-        hits("Hits", "H", Pitcher::hits),
-        runs("Runs", "R", Pitcher::runs),
-        earnedRunsAllowed("Earned Runs Allowed", "ER", Pitcher::earnedRunsAllowed),
-        homeRunsAllowed("Home Runs Allowed", "HR", Pitcher::homeRunsAllowed),
-        numberPitches("# of Pitches", "NP", Pitcher::numberPitches),
-        hitBatter("Hit Batter", "HB", Pitcher::hitBatter),
-        walks("Base on Balls", "BB", Pitcher::walks),
-        intentionalWalks("Intentional Walks", "IBB", Pitcher::intentionalWalks),
-        strikeouts("Strikeouts", "SO", Pitcher::strikeOuts),
-
-        battingAvg("Batting Average", "AVG", Pitcher::average),
-        whip("(Walks + Hits)/Inning Pitched", "WHIP", Pitcher::whip);
-
-        public final String humanName;
-        public final String db;
-
-        public final  com.vaadin.flow.function.ValueProvider<Pitcher, String> playerFunction;
-        private PS(String humanName, String db, com.vaadin.flow.function.ValueProvider<Pitcher, String> playerFunction) {
-            this.humanName = humanName;
-            this.db = db;
-            this.playerFunction = playerFunction;
-        }
-
-    }
-    private HashMap<Integer, Hitter> players = new HashMap<>();
     /**
      * Constructs an instance of MlbDatabaseManager, establishes a connection to the database,
      * and initializes the web scraping API.
@@ -113,10 +47,10 @@ public class PlayerService {
         // populating players from a a database would go her
     }
 
-    public Optional<Hitter> getBetter(int id, HS stat) {
+    public Optional<Hitter> getBetter(int id, HitterStat stat) {
         return Optional.empty();
     }
-    public Optional<Hitter> getWorse(int id, HS stat) {
+    public Optional<Hitter> getWorse(int id, HitterStat stat) {
         return Optional.empty();
     }
 
@@ -161,53 +95,54 @@ public class PlayerService {
         return new Hitter(Integer.parseInt(row.get("Player_ID").toString()), row.get("Player_Name").toString().replace('_', ' '),
                 row.get("Season").toString(),
                 row.get("Team").toString(),
-                row.get(HS.gamesPlayed.db).toString(),
-                row.get(HS.atBats.db).toString(),
-                row.get(HS.runs.db).toString(),
-                row.get(HS.hits.db).toString(),
-                row.get(HS.totalBases.db).toString(),
-                row.get(HS.doubles.db).toString(),
-                row.get(HS.triples.db).toString(),
-                row.get(HS.homeRuns.db).toString(),
-                row.get(HS.runsBattedIn.db).toString(),
-                row.get(HS.walks.db).toString(),
-                row.get(HS.intentionalWalks.db).toString(),
-                row.get(HS.strikeouts.db).toString(),
-                row.get(HS.stolenBases.db).toString(),
-                row.get(HS.caughtStealing.db).toString(),
-                row.get(HS.battingAvg.db).toString(),
-                row.get(HS.onBasePercentage.db).toString(),
-                row.get(HS.sluggingPercentage.db).toString(),
-                row.get(HS.onBasePlusSlugging.db).toString(),
-                row.get(HS.groundoutAirout.db).toString()
+                row.get(HitterStat.gamesPlayed.db).toString(),
+                row.get(HitterStat.atBats.db).toString(),
+                row.get(HitterStat.runs.db).toString(),
+                row.get(HitterStat.hits.db).toString(),
+                row.get(HitterStat.totalBases.db).toString(),
+                row.get(HitterStat.doubles.db).toString(),
+                row.get(HitterStat.triples.db).toString(),
+                row.get(HitterStat.homeRuns.db).toString(),
+                row.get(HitterStat.runsBattedIn.db).toString(),
+                row.get(HitterStat.walks.db).toString(),
+                row.get(HitterStat.intentionalWalks.db).toString(),
+                row.get(HitterStat.strikeouts.db).toString(),
+                row.get(HitterStat.stolenBases.db).toString(),
+                row.get(HitterStat.caughtStealing.db).toString(),
+                row.get(HitterStat.battingAvg.db).toString(),
+                row.get(HitterStat.onBasePercentage.db).toString(),
+                row.get(HitterStat.sluggingPercentage.db).toString(),
+                row.get(HitterStat.onBasePlusSlugging.db).toString(),
+                row.get(HitterStat.groundoutAirout.db).toString()
         );
     }
 
     public Pitcher fromPitcherRow(Map<String, ?> row) {
         return new Pitcher(
-                Integer.parseInt(row.get("Player_ID").toString()), row.get("Player_Name").toString().replace('_', ' '),
+                Integer.parseInt(row.get("Player_ID").toString()),
+                row.get("Player_Name").toString().replace('_', ' '),
                 row.get("Season").toString(),
                 row.get("Team").toString(),
-                row.get(PS.gamesPlayed.db).toString(),
-                row.get(PS.era.db).toString(),
-                row.get(PS.gamesStarted.db).toString(),
-                row.get(PS.completeGames.db).toString(),
-                row.get(PS.shutouts.db).toString(),
-                row.get(PS.holds.db).toString(),
-                row.get(PS.saves.db).toString(),
-                row.get(PS.saveOpportunities.db).toString(),
-                row.get(PS.inningsPitched.db).toString(),
-                row.get(PS.hits.db).toString(),
-                row.get(PS.runs.db).toString(),
-                row.get(PS.earnedRunsAllowed.db).toString(),
-                row.get(PS.homeRunsAllowed.db).toString(),
-                row.get(PS.numberPitches.db).toString(),
-                row.get(PS.hitBatter.db).toString(),
-                row.get(PS.walks.db).toString(),
-                row.get(PS.intentionalWalks.db).toString(),
-                row.get(PS.strikeouts.db).toString(),
-                row.get(PS.battingAvg.db).toString(),
-                row.get(PS.whip.db).toString());
+                row.get(PitcherStat.gamesPlayed.db).toString(),
+                row.get(PitcherStat.era.db).toString(),
+                row.get(PitcherStat.gamesStarted.db).toString(),
+                row.get(PitcherStat.completeGames.db).toString(),
+                row.get(PitcherStat.shutouts.db).toString(),
+                row.get(PitcherStat.holds.db).toString(),
+                row.get(PitcherStat.saves.db).toString(),
+                row.get(PitcherStat.saveOpportunities.db).toString(),
+                row.get(PitcherStat.inningsPitched.db).toString(),
+                row.get(PitcherStat.hits.db).toString(),
+                row.get(PitcherStat.runs.db).toString(),
+                row.get(PitcherStat.earnedRunsAllowed.db).toString(),
+                row.get(PitcherStat.homeRunsAllowed.db).toString(),
+                row.get(PitcherStat.numberPitches.db).toString(),
+                row.get(PitcherStat.hitBatter.db).toString(),
+                row.get(PitcherStat.walks.db).toString(),
+                row.get(PitcherStat.intentionalWalks.db).toString(),
+                row.get(PitcherStat.strikeouts.db).toString(),
+                row.get(PitcherStat.battingAvg.db).toString(),
+                row.get(PitcherStat.whip.db).toString());
     }
 
     public List<Hitter> getHittersOnTeam(String team) {
@@ -263,7 +198,7 @@ public class PlayerService {
             return Optional.empty();
         }
     }
-    public double[][] getPlayerHistory(int id, PS stat) {
+    public double[][] getPlayerHistory(int id, PitcherStat stat) {
         var list = getPitchers("Player_Id = " + id);
         System.out.println(list.toString());
         ArrayList<double[]> result = new ArrayList<>();
@@ -277,7 +212,7 @@ public class PlayerService {
             }
             double statValue;
             try {
-                statValue = Double.parseDouble(stat.playerFunction.apply(p));
+                statValue = Double.parseDouble(stat.accessor.apply(p));
             } catch (NumberFormatException e) {
                 continue;
             }
@@ -290,7 +225,7 @@ public class PlayerService {
         return result.toArray(arr);
     }
 
-    public double[][] getPlayerHistory(int id, HS stat) {
+    public double[][] getPlayerHistory(int id, HitterStat stat) {
         var list = getHitters("Player_Id = " + id);
         System.out.println(list.toString());
         ArrayList<double[]> result = new ArrayList<>();
@@ -304,7 +239,7 @@ public class PlayerService {
             }
             double statValue;
             try {
-                statValue = Double.parseDouble(stat.playerFunction.apply(p));
+                statValue = Double.parseDouble(stat.accessor.apply(p));
             } catch (NumberFormatException e) {
                 continue;
             }

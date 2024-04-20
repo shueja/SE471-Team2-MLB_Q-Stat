@@ -1,0 +1,55 @@
+package com.example.application.views.teams;
+
+import com.example.application.data.TeamService;
+import com.example.application.data.entity.Team;
+import com.example.application.views.MainLayout;
+import com.vaadin.flow.component.dependency.Uses;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.renderer.LitRenderer;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.theme.lumo.LumoUtility;
+
+
+@PageTitle("Teams")
+@Route(value = "teams", layout = MainLayout.class)
+@Uses(Icon.class)
+public class TeamsView extends Div {
+
+    public TeamsView(TeamService teamService) {
+        setSizeFull();
+        addClassNames("players-view");
+        var grid = createGrid();
+        grid.setItems(
+                teamService.getTeams().values()
+        );
+        VerticalLayout layout = new VerticalLayout(grid);
+        layout.setSizeFull();
+        layout.setPadding(false);
+        layout.setSpacing(false);
+        add(layout);
+    }
+    private Grid<Team> createGrid() {
+        var grid = new Grid<Team>();
+        grid.addColumn(
+                LitRenderer
+                        .<Team>of("<a href=\"/team/${item.acronym}\">${item.name}</a>")
+                        .withProperty("name", Team::name).withProperty("acronym", Team::acronym)
+        ).setHeader("Name").setSortable(true).setAutoWidth(true);
+        for (TeamService.TeamStat stat : TeamService.TeamStat.values()) {
+            Span headerComponent = new Span();
+            headerComponent.setText(stat.dbHeader);
+            headerComponent.getElement().setProperty("title", stat.humanName);
+            grid.addColumn(stat.teamFunction).setHeader(headerComponent).setSortable(true).setAutoWidth(true);
+        }
+        grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+        grid.addClassNames(LumoUtility.Border.TOP, LumoUtility.BorderColor.CONTRAST_10);
+
+        return grid;
+    }
+}

@@ -1,41 +1,20 @@
 package com.example.application.data;
 
+import com.example.application.data.entity.Hitter;
 import com.example.application.data.entity.Team;
+import com.vaadin.flow.function.ValueProvider;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class TeamService {
 
-    public static enum TeamStat {
-        wins("Wins", "W", Team::w),
-        losses("Losses", "L", Team::l),
-        winPct("Win Percentage", "PCT", Team::pct),
-        gamesBack("Games Back","GB", Team::gb),
-        home("Home Record", "HOME", Team::home),
-        away("Away Record", "AWAY", Team::away),
-        runsScored("Runs Scored", "RS", Team::rs),
-        runsAllowed("Runs Allowed", "RA", Team::ra),
-        runDiff("Runs Difference", "DIFF", Team::diff),
-        streak("Streak", "STRK", Team::strk),
-        lastTen("Last 10 Games", "L10", Team::l10);
-
-        public final String humanName;
-        public final String dbHeader;
-
-        public final  com.vaadin.flow.function.ValueProvider<Team, ?> teamFunction;
-        private TeamStat(String humanName, String dbHeader, com.vaadin.flow.function.ValueProvider<Team, ?> playerFunction) {
-            this.humanName = humanName;
-            this.dbHeader = dbHeader;
-            this.teamFunction = playerFunction;
-        }
-
-    }
-    private HashMap<String, Team> teams = new HashMap<>();
+        private HashMap<String, Team> teams = new HashMap<>();
 
     public TeamService() {
         System.out.println("STARTING TEAMSERVICE");
@@ -70,8 +49,8 @@ public class TeamService {
         } catch (Exception e) {
             System.out.println(e);
         }
-        // populating players from a a database would go her
     }
 
     public HashMap<String, Team> getTeams() {return teams;}
+    public List<Team> getAllTeams() {return teams.values().stream().toList();}
 }

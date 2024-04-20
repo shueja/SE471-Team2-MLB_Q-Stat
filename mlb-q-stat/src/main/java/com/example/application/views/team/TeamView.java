@@ -1,6 +1,7 @@
 package com.example.application.views.team;
 
 import com.example.application.data.TeamService;
+import com.example.application.data.enums.TeamStat;
 import com.example.application.views.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.Uses;
@@ -22,7 +23,6 @@ import com.vaadin.flow.router.Route;
 public class TeamView extends Div implements HasUrlParameter<String> {
 
     private TeamService teamService;
-    private String teamId;
 
     public TeamView(TeamService teamService) {
         this.teamService = teamService;
@@ -31,13 +31,13 @@ public class TeamView extends Div implements HasUrlParameter<String> {
 
     }
 
-    private Component createList() {
+    private Component createList(String teamId) {
 
         var player = teamService.getTeams().get(teamId);
         if (player != null) {
             FormLayout form = new FormLayout();
-            for (TeamService.TeamStat stat : TeamService.TeamStat.values()) {
-                form.addFormItem(new Span(String.valueOf(stat.teamFunction.apply(player))), stat.humanName);
+            for (TeamStat stat : TeamStat.values()) {
+                form.addFormItem(new Span(String.valueOf(stat.accessor().apply(player))), stat.humanName);
             }
             return form;
         }
@@ -47,23 +47,17 @@ public class TeamView extends Div implements HasUrlParameter<String> {
 
     @Override
     public void setParameter(BeforeEvent beforeEvent, String acronym) {
-        teamId = acronym;
-        var player = teamService.getTeams().get(teamId);
+        var player = teamService.getTeams().get(acronym);
         if (player != null) {
             setText("");
             VerticalLayout layout = new VerticalLayout();
             layout.add(new H1(player.name()));
-            layout.add(createList());
+            layout.add(createList(acronym));
             layout.setSizeFull();
             layout.setPadding(false);
             layout.setSpacing(false);
             add(layout);
-            //setText(playerId+" "+player.name()+" "+player.team());
         }
     }
-
-//    private void refreshGrid() {
-//        grid.getDataProvider().refreshAll();
-//    }
 
 }

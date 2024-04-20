@@ -8,3 +8,4 @@ public record Hitter(int id, String name, String season, String team,
                      String stolenBases, String caughtStealing,
                      String average, String obp, String slg, String ops, String groundoutFlyout) {
 }
+
