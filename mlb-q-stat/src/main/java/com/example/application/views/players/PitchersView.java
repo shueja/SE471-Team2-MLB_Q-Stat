@@ -20,7 +20,6 @@ import com.vaadin.flow.router.RouteAlias;
 public class PitchersView extends GenericPlayersView {
     public PitchersView(PlayerService playerService) {
         super(
-                Pitcher.class,
                 PitcherStat.class,
                 playerService.getAllPitchers(),
                 LitRenderer

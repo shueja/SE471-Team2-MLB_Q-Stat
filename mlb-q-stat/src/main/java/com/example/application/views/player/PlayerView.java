@@ -32,7 +32,6 @@ public class PlayerView extends Div implements HasUrlParameter<Integer> {
         this.playerService = playerService;
         setSizeFull();
         addClassNames("players-view");
-
     }
 
     private Component createHitterList(BiConsumer<HitterStat, Integer> updateGraph) {
@@ -69,7 +68,6 @@ public class PlayerView extends Div implements HasUrlParameter<Integer> {
         return new Span();
     }
 
-    record GraphPoint(double x, double y) {}
     @Override
     public void setParameter(BeforeEvent beforeEvent, Integer integer) {
         playerId = integer.intValue();

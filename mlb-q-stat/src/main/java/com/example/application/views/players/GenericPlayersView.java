@@ -11,6 +11,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.renderer.LitRenderer;
+import com.vaadin.flow.function.ValueProvider;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -27,20 +28,19 @@ public class GenericPlayersView extends Div {
             H,
             E extends StatsEnum<H>
             > GenericPlayersView(
-                    Class<H> recordClass,
                     Class<E> enumClass,
                     List<H> list,
                     LitRenderer<H> nameColumn) {
         setSizeFull();
         addClassNames("players-view");
-        createGrid(recordClass, enumClass, list, nameColumn);
+        createGrid(enumClass, list, nameColumn);
 
 
     }
 
     private <H, E extends StatsEnum<H>>
     void createGrid(
-            Class<H> recordClass, Class<E> enumClass, List<H> list,
+           Class<E> enumClass, List<H> list,
     LitRenderer<H> nameColumn) {
         Grid<H> grid = new Grid<>();
         grid.addColumn(
@@ -50,7 +50,9 @@ public class GenericPlayersView extends Div {
             Span headerComponent = new Span();
             headerComponent.setText(stat.db());
             headerComponent.getElement().setProperty("title", stat.humanName());
-            grid.addColumn(stat.accessor()).setHeader(headerComponent).setAutoWidth(true);
+            var accessor = stat.accessor();
+            grid.addColumn(accessor::apply).setHeader(headerComponent)
+                    .setSortable(true).setComparator(stat.sorter()).setAutoWidth(true);
         }
         grid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         grid.addClassNames(LumoUtility.Border.TOP, LumoUtility.BorderColor.CONTRAST_10);

@@ -17,7 +17,6 @@ import com.vaadin.flow.router.Route;
 public class HittersView extends GenericPlayersView {
     public HittersView(PlayerService playerService) {
         super(
-                Hitter.class,
                 HitterStat.class,
                 playerService.getAllHitters(),
                 LitRenderer

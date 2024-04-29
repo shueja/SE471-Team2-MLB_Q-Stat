@@ -19,13 +19,11 @@ public class TeamsView extends GenericPlayersView {
 
     public TeamsView(TeamService teamService) {
         super(
-                Team.class,
                 TeamStat.class,
                 teamService.getAllTeams(),
                 LitRenderer
                         .<Team>of("<a href=\"/team/${item.acronym}\">${item.name}</a>")
                         .withProperty("name", Team::name).withProperty("acronym", Team::acronym)
         );
-
     }
 }

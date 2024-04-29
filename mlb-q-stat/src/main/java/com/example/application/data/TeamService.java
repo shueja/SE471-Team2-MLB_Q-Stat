@@ -23,6 +23,7 @@ public class TeamService {
             while ((line = br.readLine()) != null) {
                 //System.out.println(line);
                 String[] values = line.split(",");
+                // avoid trying to serialize the header row
                 if (!values[0].equals("ACR")) {
                     teams.put(
                             values[0],
