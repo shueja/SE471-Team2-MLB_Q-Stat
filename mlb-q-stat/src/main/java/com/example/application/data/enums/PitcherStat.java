@@ -1,33 +1,34 @@
 package com.example.application.data.enums;
 
 import com.example.application.data.entity.Pitcher;
+import org.springframework.data.domain.Sort;
 
 import java.util.Comparator;
 import java.util.function.Function;
 
 public enum PitcherStat implements StatsEnum<Pitcher> {
     league("Team", "Team", Pitcher::team, String::compareTo),
-    gamesPlayed("Games Played", "G", Pitcher::gamesPlayed, String::compareTo),
-    era("ERA", "ERA", Pitcher::era, String::compareTo),
-    gamesStarted("Games Started", "GS", Pitcher::gamesStarted, String::compareTo),
-    completeGames("Complete Games", "CG", Pitcher::completeGames, String::compareTo),
-    shutouts("Shutouts", "SHO", Pitcher::shutouts, String::compareTo),
-    holds("Holds", "HLD", Pitcher::holds, String::compareTo),
-    saves("Saves", "SV", Pitcher::saves, String::compareTo),
-    saveOpportunities("Save Opportunities", "SVO", Pitcher::saveOpps, String::compareTo),
-    inningsPitched("Innings Pitched", "IP", Pitcher::inningsPitched, String::compareTo),
-    hits("Hits", "H", Pitcher::hits, String::compareTo),
-    runs("Runs", "R", Pitcher::runs, String::compareTo),
-    earnedRunsAllowed("Earned Runs Allowed", "ER", Pitcher::earnedRunsAllowed, String::compareTo),
-    homeRunsAllowed("Home Runs Allowed", "HR", Pitcher::homeRunsAllowed, String::compareTo),
-    numberPitches("# of Pitches", "NP", Pitcher::numberPitches, String::compareTo),
-    hitBatter("Hit Batter", "HB", Pitcher::hitBatter, String::compareTo),
-    walks("Base on Balls", "BB", Pitcher::walks, String::compareTo),
-    intentionalWalks("Intentional Walks", "IBB", Pitcher::intentionalWalks, String::compareTo),
-    strikeouts("Strikeouts", "SO", Pitcher::strikeOuts, String::compareTo),
+    gamesPlayed("Games Played", "G", Pitcher::gamesPlayed, IntSorter),
+    era("ERA", "ERA", Pitcher::era, DoubleSorter),
+    gamesStarted("Games Started", "GS", Pitcher::gamesStarted, IntSorter),
+    completeGames("Complete Games", "CG", Pitcher::completeGames, IntSorter),
+    shutouts("Shutouts", "SHO", Pitcher::shutouts, IntSorter),
+    holds("Holds", "HLD", Pitcher::holds, IntSorter),
+    saves("Saves", "SV", Pitcher::saves, IntSorter),
+    saveOpportunities("Save Opportunities", "SVO", Pitcher::saveOpps, IntSorter),
+    inningsPitched("Innings Pitched", "IP", Pitcher::inningsPitched, DoubleSorter),
+    hits("Hits", "H", Pitcher::hits, IntSorter),
+    runs("Runs", "R", Pitcher::runs, IntSorter),
+    earnedRunsAllowed("Earned Runs Allowed", "ER", Pitcher::earnedRunsAllowed, IntSorter),
+    homeRunsAllowed("Home Runs Allowed", "HR", Pitcher::homeRunsAllowed, IntSorter),
+    numberPitches("# of Pitches", "NP", Pitcher::numberPitches, IntSorter),
+    hitBatter("Hit Batter", "HB", Pitcher::hitBatter, IntSorter),
+    walks("Base on Balls", "BB", Pitcher::walks, IntSorter),
+    intentionalWalks("Intentional Walks", "IBB", Pitcher::intentionalWalks, IntSorter),
+    strikeouts("Strikeouts", "SO", Pitcher::strikeOuts, IntSorter),
 
-    battingAvg("Batting Average", "AVG", Pitcher::average, String::compareTo),
-    whip("(Walks + Hits)/Inning Pitched", "WHIP", Pitcher::whip, String::compareTo);
+    battingAvg("Batting Average", "AVG", Pitcher::average, DoubleSorter),
+    whip("(Walks + Hits)/Inning Pitched", "WHIP", Pitcher::whip, DoubleSorter);
 
     public final String humanName;
     public String humanName() {return humanName;}
@@ -37,16 +38,16 @@ public enum PitcherStat implements StatsEnum<Pitcher> {
     public final Function<Pitcher, String> accessor;
     public Function<Pitcher, String> accessor() {return accessor;}
 
-    public final Comparator<String> sorter;
+    public final SortingStrategy<Pitcher> sorter;
     @Override
-    public Comparator<Pitcher> sorter() {
-        return (stat0, stat1) -> sorter.compare(accessor.apply(stat0), accessor.apply(stat1));
+    public SortingStrategy<Pitcher> sorter() {
+        return sorter;
     }
     private PitcherStat(String humanName, String db, Function<Pitcher, String> accessor, Comparator<String> sorter) {
         this.humanName = humanName;
         this.db = db;
         this.accessor = accessor;
-        this.sorter = sorter;
+        this.sorter = (stat0, stat1) -> sorter.compare(accessor.apply(stat0), accessor.apply(stat1));
     }
 
 }
