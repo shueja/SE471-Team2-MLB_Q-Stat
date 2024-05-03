@@ -17,7 +17,7 @@ import com.vaadin.flow.router.RouteAlias;
 @Route(value = "pitchers", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
 @Uses(Icon.class)
-public class PitchersView extends GenericPlayersView {
+public class PitchersView extends GenericPlayersView<Pitcher, PitcherStat> {
     public PitchersView(PlayerService playerService) {
         super(
                 PitcherStat.class,

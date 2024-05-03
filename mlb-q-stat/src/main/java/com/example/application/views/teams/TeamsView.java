@@ -15,7 +15,7 @@ import com.vaadin.flow.router.Route;
 @PageTitle("Teams")
 @Route(value = "teams", layout = MainLayout.class)
 @Uses(Icon.class)
-public class TeamsView extends GenericPlayersView {
+public class TeamsView extends GenericPlayersView<Team, TeamStat>{
 
     public TeamsView(TeamService teamService) {
         super(

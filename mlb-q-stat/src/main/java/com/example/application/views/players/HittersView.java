@@ -14,7 +14,7 @@ import com.vaadin.flow.router.Route;
 @PageTitle("Hitters")
 @Route(value = "hitters", layout = MainLayout.class)
 @Uses(Icon.class)
-public class HittersView extends GenericPlayersView {
+public class HittersView extends GenericPlayersView <Hitter, HitterStat> {
     public HittersView(PlayerService playerService) {
         super(
                 HitterStat.class,
