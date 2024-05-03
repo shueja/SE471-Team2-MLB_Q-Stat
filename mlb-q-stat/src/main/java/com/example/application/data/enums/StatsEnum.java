@@ -4,6 +4,10 @@ import java.util.Comparator;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * READ ONLY INTERFACE
+ * @param <R> The record this enum is about , Hitter, Pitcher, etc
+ */
 public interface StatsEnum<R> {
     public String humanName();
 

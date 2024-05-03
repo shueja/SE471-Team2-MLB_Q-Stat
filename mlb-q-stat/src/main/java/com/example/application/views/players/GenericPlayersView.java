@@ -32,7 +32,7 @@ public class GenericPlayersView <
         E extends StatsEnum<H>
         > extends Div {
 
-    private HorizontalLayout filterPanel;
+    private FilterPanel<E> filterPanel;
     private Grid<H> grid;
     private List<H> fullList;
     public  GenericPlayersView(
@@ -65,7 +65,7 @@ public class GenericPlayersView <
             grid.addComponentColumn(row -> {
                 Button button = new Button(accessor.apply(row));
                 button.addClickListener(click ->
-                        setFilter(stat.sorter(), row));
+                        setFilter(stat, row));
                 button.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
                 return button;
             })
@@ -88,8 +88,9 @@ public class GenericPlayersView <
     private void clearFilter() {
         grid.setItems(fullList);
     }
-    private void setFilter(Comparator<H> filter, H target) {
-        grid.setItems(new GridFilter<H>(filter, target).apply(fullList));
+    private void setFilter(E stat, H target) {
+        grid.setItems(new GridFilter<H>(stat.sorter(), target).apply(fullList));
+        filterPanel.setFilterTarget(stat);
 //        The framework-intended way to do this is below but that doesn't actually implement the filter pattern as taught.
 //        ListDataProvider<H> listDataProvider = (ListDataProvider<H>) grid.getDataProvider();
 //        listDataProvider.setFilter(item -> {

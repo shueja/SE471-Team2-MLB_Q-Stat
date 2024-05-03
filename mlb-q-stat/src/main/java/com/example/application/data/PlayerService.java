@@ -4,6 +4,8 @@ import com.example.application.data.entity.Hitter;
 import com.example.application.data.entity.Pitcher;
 import com.example.application.data.enums.HitterStat;
 import com.example.application.data.enums.PitcherStat;
+import com.example.application.data.service.HitterFactory;
+import com.example.application.data.service.PitcherFactory;
 import com.vaadin.flow.function.ValueProvider;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,8 @@ import java.util.*;
 public class PlayerService {
     private static final String DATABASE_PATH = "jdbc:sqlite:MLBdatabase.db";
     private final Connection connection;
+    private final HitterFactory hitterFac = new HitterFactory();
+    private final PitcherFactory pitcherFac = new PitcherFactory();
 
     
 
@@ -92,57 +96,11 @@ public class PlayerService {
     }
 
     public Hitter fromHitterRow(Map<String, ?> row) {
-        return new Hitter(Integer.parseInt(row.get("Player_ID").toString()), row.get("Player_Name").toString().replace('_', ' '),
-                row.get("Season").toString(),
-                row.get("Team").toString(),
-                row.get(HitterStat.gamesPlayed.db).toString(),
-                row.get(HitterStat.atBats.db).toString(),
-                row.get(HitterStat.runs.db).toString(),
-                row.get(HitterStat.hits.db).toString(),
-                row.get(HitterStat.totalBases.db).toString(),
-                row.get(HitterStat.doubles.db).toString(),
-                row.get(HitterStat.triples.db).toString(),
-                row.get(HitterStat.homeRuns.db).toString(),
-                row.get(HitterStat.runsBattedIn.db).toString(),
-                row.get(HitterStat.walks.db).toString(),
-                row.get(HitterStat.intentionalWalks.db).toString(),
-                row.get(HitterStat.strikeouts.db).toString(),
-                row.get(HitterStat.stolenBases.db).toString(),
-                row.get(HitterStat.caughtStealing.db).toString(),
-                row.get(HitterStat.battingAvg.db).toString(),
-                row.get(HitterStat.onBasePercentage.db).toString(),
-                row.get(HitterStat.sluggingPercentage.db).toString(),
-                row.get(HitterStat.onBasePlusSlugging.db).toString(),
-                row.get(HitterStat.groundoutAirout.db).toString()
-        );
+        return hitterFac.fromRow(row);
     }
 
     public Pitcher fromPitcherRow(Map<String, ?> row) {
-        return new Pitcher(
-                Integer.parseInt(row.get("Player_ID").toString()),
-                row.get("Player_Name").toString().replace('_', ' '),
-                row.get("Season").toString(),
-                row.get("Team").toString(),
-                row.get(PitcherStat.gamesPlayed.db).toString(),
-                row.get(PitcherStat.era.db).toString(),
-                row.get(PitcherStat.gamesStarted.db).toString(),
-                row.get(PitcherStat.completeGames.db).toString(),
-                row.get(PitcherStat.shutouts.db).toString(),
-                row.get(PitcherStat.holds.db).toString(),
-                row.get(PitcherStat.saves.db).toString(),
-                row.get(PitcherStat.saveOpportunities.db).toString(),
-                row.get(PitcherStat.inningsPitched.db).toString(),
-                row.get(PitcherStat.hits.db).toString(),
-                row.get(PitcherStat.runs.db).toString(),
-                row.get(PitcherStat.earnedRunsAllowed.db).toString(),
-                row.get(PitcherStat.homeRunsAllowed.db).toString(),
-                row.get(PitcherStat.numberPitches.db).toString(),
-                row.get(PitcherStat.hitBatter.db).toString(),
-                row.get(PitcherStat.walks.db).toString(),
-                row.get(PitcherStat.intentionalWalks.db).toString(),
-                row.get(PitcherStat.strikeouts.db).toString(),
-                row.get(PitcherStat.battingAvg.db).toString(),
-                row.get(PitcherStat.whip.db).toString());
+        return pitcherFac.fromRow(row);
     }
 
     public List<Hitter> getHittersOnTeam(String team) {
